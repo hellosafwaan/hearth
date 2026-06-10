@@ -2,6 +2,11 @@ const TOOL_LABELS: Record<string, string> = {
   screenshot: '📸 Screenshot',
   read_page: '📄 Read page',
   get_selected_text: '✂️ Selection',
+  get_interactive_elements: '🔍 Scan page',
+  click_element: '🖱️ Click',
+  fill_form: '⌨️ Fill',
+  navigate_to: '🧭 Navigate',
+  open_tab: '🗂️ New tab',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

@@ -17,6 +17,11 @@ export interface AgentCallbacks {
   onToolStart: (part: ToolUsePart) => void;
   /** A user-role message carrying tool results — persist it. */
   onToolMessage: (message: ChatMessage) => void | Promise<void>;
+  /**
+   * Asked before any tool in `actingTools` runs. Resolve false to deny —
+   * the denial is fed back to the model as an error tool result.
+   */
+  requestApproval?: (part: ToolUsePart) => Promise<boolean>;
 }
 
 export interface AgentOptions {
@@ -25,12 +30,34 @@ export interface AgentOptions {
   history: ChatMessage[];
   tools: ToolDefinition[];
   registry: Record<string, ToolExecutor>;
+  /** Names of tools that must pass requestApproval before executing. */
+  actingTools?: ReadonlySet<string>;
   signal?: AbortSignal;
   callbacks: AgentCallbacks;
 }
 
+/** Resolves with the promise, or rejects as soon as the signal aborts. */
+function raceWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+    if (signal.aborted) return onAbort();
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 export async function runAgent(options: AgentOptions): Promise<void> {
-  const { provider, model, tools, registry, signal, callbacks } = options;
+  const { provider, model, tools, registry, actingTools, signal, callbacks } = options;
   const messages = [...options.history];
 
   for (let step = 0; step < MAX_AGENT_STEPS; step++) {
@@ -48,6 +75,26 @@ export async function runAgent(options: AgentOptions): Promise<void> {
     const results: ToolResultPart[] = [];
     for (const toolUse of toolUses) {
       signal?.throwIfAborted();
+
+      if (actingTools?.has(toolUse.name) && callbacks.requestApproval) {
+        const approved = await raceWithAbort(callbacks.requestApproval(toolUse), signal);
+        if (!approved) {
+          results.push({
+            type: 'tool_result',
+            toolUseId: toolUse.id,
+            toolName: toolUse.name,
+            content: [
+              {
+                type: 'text',
+                text: 'The user denied this action. Do not retry it — ask the user how to proceed instead.',
+              },
+            ],
+            isError: true,
+          });
+          continue;
+        }
+      }
+
       callbacks.onToolStart(toolUse);
 
       const executor = registry[toolUse.name];

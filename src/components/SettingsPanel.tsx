@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { APP_NAME, MODELS } from '../lib/constants';
 import { createAnthropicProvider } from '../lib/providers/anthropic';
-import { setSettings, type Settings } from '../lib/settings/storage';
+import { removeAutoApproveOrigin, setSettings, type Settings } from '../lib/settings/storage';
 
 type TestStatus = { state: 'idle' } | { state: 'testing' } | { state: 'ok' } | { state: 'error'; message: string };
 
@@ -13,7 +13,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [saved, setSaved] = useState(false);
 
   async function save() {
-    await setSettings({ provider: 'anthropic', apiKey: apiKey.trim(), model });
+    await setSettings({ ...props.settings, apiKey: apiKey.trim(), model });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
     props.onDone?.();
@@ -99,6 +99,31 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
       {test.state === 'ok' && <p className="text-xs text-emerald-400">Key works ✓</p>}
       {test.state === 'error' && (
         <p className="text-xs break-words text-red-400">{test.message}</p>
+      )}
+
+      {props.settings.autoApproveOrigins.length > 0 && (
+        <Field label="Trusted sites (actions run without approval)">
+          <ul className="space-y-1">
+            {props.settings.autoApproveOrigins.map((origin) => (
+              <li
+                key={origin}
+                className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5"
+              >
+                <span className="truncate font-mono text-[0.7rem] text-zinc-300">
+                  {origin}
+                </span>
+                <button
+                  type="button"
+                  title={`Stop auto-approving ${origin}`}
+                  onClick={() => removeAutoApproveOrigin(origin)}
+                  className="ml-2 text-zinc-600 hover:text-red-400"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Field>
       )}
     </div>
   );

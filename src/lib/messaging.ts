@@ -2,7 +2,12 @@ import { browser } from '#imports';
 
 // Typed protocol between the sidepanel (tool executors) and the content script.
 
-export type ContentRequest = { type: 'read_page' } | { type: 'get_selected_text' };
+export type ContentRequest =
+  | { type: 'read_page' }
+  | { type: 'get_selected_text' }
+  | { type: 'get_interactive_elements' }
+  | { type: 'click_element'; index: number }
+  | { type: 'fill_form'; index: number; value: string };
 
 export interface PageContent {
   title: string;
@@ -16,6 +21,9 @@ export interface PageContent {
 export type ContentResponseData = {
   read_page: PageContent;
   get_selected_text: { text: string; url: string; title: string };
+  get_interactive_elements: { listing: string; count: number; url: string };
+  click_element: { result: string };
+  fill_form: { result: string };
 };
 
 export type ContentResponse<T extends ContentRequest['type'] = ContentRequest['type']> =

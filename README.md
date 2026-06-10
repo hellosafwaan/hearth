@@ -16,7 +16,12 @@ server — your API key and chat history never leave your device.
   `get_selected_text`, and `screenshot`; the model picks the right one
 - **Highlight and ask** — select text on any page → right-click →
   "Ask Sidekick about…" → sidebar opens with the quote pre-filled
-- **Minimal agent loop** — streaming, tool calls, 5-step cap, Stop button
+- **Acting tools with human approval** — `get_interactive_elements` (numbered
+  element snapshot), `click_element` / `fill_form` by index, `navigate_to`,
+  `open_tab`. Every state-changing action pauses for Approve/Deny in the
+  sidebar; per-site "always allow" is managed in Settings. This gate is the
+  core defense against prompt injection from page content.
+- **Minimal agent loop** — streaming, tool calls, 10-step cap, Stop button
 - **Local history** — conversations stored in IndexedDB (Dexie)
 
 ## Architecture
@@ -57,8 +62,6 @@ requested on first use.
 
 ## Roadmap
 
-- Acting tools (click, fill, navigate) gated behind a human-approval UI —
-  page content is untrusted input and the approval gate is the core defense
-  against prompt injection
 - OpenAI + Gemini adapters behind the existing provider interface
 - JSON export/import of chat history
+- Optional host permissions (replace `<all_urls>`) before store submission

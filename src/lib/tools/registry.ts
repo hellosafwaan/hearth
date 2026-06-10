@@ -1,4 +1,6 @@
 import type { ImagePart, TextPart } from '../providers/types';
+import { executeNavigateTo, executeOpenTab } from './executors/browser';
+import { executeClickElement, executeFillForm, executeGetInteractiveElements } from './executors/dom';
 import { executeGetSelectedText, executeReadPage } from './executors/page';
 import { executeScreenshot } from './executors/screenshot';
 
@@ -15,4 +17,9 @@ export const toolRegistry: Record<string, ToolExecutor> = {
   read_page: executeReadPage,
   get_selected_text: executeGetSelectedText,
   screenshot: executeScreenshot,
+  get_interactive_elements: executeGetInteractiveElements,
+  click_element: executeClickElement,
+  fill_form: executeFillForm,
+  navigate_to: executeNavigateTo,
+  open_tab: executeOpenTab,
 };

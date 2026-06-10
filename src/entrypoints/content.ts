@@ -1,6 +1,7 @@
 import { Readability } from '@mozilla/readability';
 import { browser, defineContentScript } from '#imports';
 import { READ_PAGE_MAX_CHARS } from '../lib/constants';
+import { clickElement, fillForm, getInteractiveElements } from '../lib/dom-actions';
 import type { ContentRequest, ContentResponse, PageContent } from '../lib/messaging';
 
 function cap(text: string): { text: string; truncated: boolean } {
@@ -48,6 +49,12 @@ function handle(request: ContentRequest): ContentResponse {
           title: document.title,
         },
       };
+    case 'get_interactive_elements':
+      return { ok: true, data: getInteractiveElements() };
+    case 'click_element':
+      return { ok: true, data: clickElement(request.index) };
+    case 'fill_form':
+      return { ok: true, data: fillForm(request.index, request.value) };
   }
 }
 

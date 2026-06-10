@@ -1,14 +1,27 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRef, useState } from 'react';
+import { browser } from '#imports';
 import { runAgent } from '../lib/agent/loop';
 import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
 import { createAnthropicProvider } from '../lib/providers/anthropic';
-import type { ChatMessage } from '../lib/providers/types';
-import type { Settings } from '../lib/settings/storage';
-import { toolDefinitions } from '../lib/tools/definitions';
+import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
+import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
+import { ACTING_TOOLS, toolDefinitions } from '../lib/tools/definitions';
 import { toolRegistry } from '../lib/tools/registry';
+import { ApprovalCard, type ApprovalDecision, type PendingApproval } from './ApprovalCard';
 import { Composer } from './Composer';
 import { MessageList } from './MessageList';
+
+async function getActiveTabOrigin(): Promise<string | null> {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) return null;
+    const url = new URL(tab.url);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
 
 export interface LiveState {
   streamText: string;
@@ -37,7 +50,32 @@ export function Chat(props: {
   const [running, setRunning] = useState(false);
   const [live, setLive] = useState<LiveState>({ streamText: '', toolName: null });
   const [error, setError] = useState<string | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  async function requestApproval(part: ToolUsePart): Promise<boolean> {
+    const origin = await getActiveTabOrigin();
+
+    // Read settings fresh — the prop can be stale mid-run.
+    const current = await getSettings();
+    if (origin && current.autoApproveOrigins.includes(origin)) return true;
+
+    const decision = await new Promise<ApprovalDecision>((resolve) => {
+      setPendingApproval({
+        toolUseId: part.id,
+        name: part.name,
+        input: part.input,
+        host: origin ? new URL(origin).host : null,
+        resolve,
+      });
+    });
+    setPendingApproval(null);
+
+    if (decision.approved && decision.rememberOrigin && origin) {
+      await addAutoApproveOrigin(origin);
+    }
+    return decision.approved;
+  }
 
   async function send(text: string) {
     if (running || !text.trim()) return;
@@ -67,8 +105,10 @@ export function Chat(props: {
         history,
         tools: toolDefinitions,
         registry: toolRegistry,
+        actingTools: ACTING_TOOLS,
         signal: controller.signal,
         callbacks: {
+          requestApproval,
           onTextDelta: (delta) =>
             setLive((s) => ({ ...s, streamText: s.streamText + delta })),
           onAssistantMessage: async (message) => {
@@ -90,6 +130,7 @@ export function Chat(props: {
       abortRef.current = null;
       setRunning(false);
       setLive({ streamText: '', toolName: null });
+      setPendingApproval(null);
     }
   }
 
@@ -106,6 +147,7 @@ export function Chat(props: {
       ) : (
         <MessageList messages={messages} running={running} live={live} />
       )}
+      {pendingApproval && <ApprovalCard approval={pendingApproval} />}
       {error && (
         <div className="mx-3 mb-2 rounded border border-red-900 bg-red-950/60 px-3 py-2 text-xs text-red-300">
           {error}
