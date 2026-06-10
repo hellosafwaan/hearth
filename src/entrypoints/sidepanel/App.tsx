@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Chat } from '../../components/Chat';
+import { Chat, type ComposerDraft } from '../../components/Chat';
 import { ConversationList } from '../../components/ConversationList';
 import { SettingsPanel } from '../../components/SettingsPanel';
 import { APP_NAME } from '../../lib/constants';
+import {
+  formatSelectionDraft,
+  takePendingSelection,
+  watchPendingSelection,
+  type PendingSelection,
+} from '../../lib/selection';
 import { getSettings, watchSettings, type Settings } from '../../lib/settings/storage';
 
 type View = 'chat' | 'settings' | 'history';
@@ -11,10 +17,28 @@ export default function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [view, setView] = useState<View>('chat');
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<ComposerDraft | null>(null);
 
   useEffect(() => {
     getSettings().then(setSettings);
     return watchSettings(setSettings);
+  }, []);
+
+  // Highlight-and-ask: a selection handed off by the context menu starts a
+  // fresh chat with the quote pre-filled.
+  useEffect(() => {
+    const apply = (selection: PendingSelection) => {
+      setConversationId(null);
+      setView('chat');
+      setDraft({ id: selection.id, text: formatSelectionDraft(selection) });
+    };
+    takePendingSelection().then((selection) => {
+      if (selection) apply(selection);
+    });
+    return watchPendingSelection((selection) => {
+      takePendingSelection();
+      apply(selection);
+    });
   }, []);
 
   if (!settings) return null;
@@ -74,6 +98,7 @@ export default function App() {
             settings={settings}
             conversationId={conversationId}
             onConversationCreated={setConversationId}
+            draft={draft}
           />
         )}
       </main>

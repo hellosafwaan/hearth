@@ -11,7 +11,7 @@ export default defineConfig({
     name: 'Sidekick',
     description:
       'Privacy-first AI sidebar. Bring your own key — nothing leaves your device except your own API calls.',
-    permissions: ['tabs', 'storage'],
+    permissions: ['tabs', 'storage', 'scripting', 'contextMenus'],
     // <all_urls> lets the screenshot tool capture any tab without a per-capture
     // user gesture (activeTab alone breaks agent-initiated captures).
     // TODO(v2): move to optional host permissions requested at first use.

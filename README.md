@@ -7,13 +7,15 @@ server — your API key and chat history never leave your device.
 > `APP_NAME` in [src/lib/constants.ts](src/lib/constants.ts) and the manifest
 > `name` in [wxt.config.ts](wxt.config.ts).
 
-## v1 features
+## Features
 
 - **Bring your own key** — Anthropic API, key stored in `storage.local` only
   (never `storage.sync`, which would replicate it through vendor servers)
 - **Persistent sidebar** — Chrome side panel / Firefox sidebar
-- **Screenshot tool** — the model can capture the current tab and answer
-  questions about it ("Summarize this page")
+- **Page tools** — `read_page` (Mozilla Readability extraction),
+  `get_selected_text`, and `screenshot`; the model picks the right one
+- **Highlight and ask** — select text on any page → right-click →
+  "Ask Sidekick about…" → sidebar opens with the quote pre-filled
 - **Minimal agent loop** — streaming, tool calls, 5-step cap, Stop button
 - **Local history** — conversations stored in IndexedDB (Dexie)
 
@@ -26,8 +28,9 @@ server — your API key and chat history never leave your device.
   Anthropic adapter (official SDK) is the only implementation in v1. OpenAI and
   Gemini adapters slot in behind the same interface.
 - `src/lib/tools/` separates tool *definitions* (schemas the model sees) from
-  *executors*. v2 tools that need DOM access (read_page, click) will route to a
-  content script via the registry.
+  *executors*. DOM tools (`read_page`, `get_selected_text`) run in the content
+  script via a typed message bridge (`src/lib/messaging.ts`) with an
+  inject-and-retry fallback for tabs opened before the extension loaded.
 
 ## Development
 
@@ -52,11 +55,10 @@ v1 uses `<all_urls>` host permission so the screenshot tool works without a
 per-capture user gesture. TODO(v2): switch to optional host permissions
 requested on first use.
 
-## Roadmap (v2+)
+## Roadmap
 
-- OpenAI + Gemini adapters
-- read_page (Readability), get_selected_text, highlight-and-ask
 - Acting tools (click, fill, navigate) gated behind a human-approval UI —
   page content is untrusted input and the approval gate is the core defense
   against prompt injection
+- OpenAI + Gemini adapters behind the existing provider interface
 - JSON export/import of chat history

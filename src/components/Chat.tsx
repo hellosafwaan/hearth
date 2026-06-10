@@ -15,12 +15,18 @@ export interface LiveState {
   toolName: string | null;
 }
 
+export interface ComposerDraft {
+  id: string;
+  text: string;
+}
+
 export function Chat(props: {
   settings: Settings;
   conversationId: string | null;
   onConversationCreated: (id: string) => void;
+  draft?: ComposerDraft | null;
 }) {
-  const { settings, conversationId, onConversationCreated } = props;
+  const { settings, conversationId, onConversationCreated, draft } = props;
 
   const messages = useLiveQuery(
     () => (conversationId ? getMessages(conversationId) : Promise.resolve([])),
@@ -96,7 +102,7 @@ export function Chat(props: {
   return (
     <div className="flex h-full flex-col">
       {isEmpty ? (
-        <EmptyState onSummarize={() => send('Take a screenshot of the current page and summarize it.')} />
+        <EmptyState onSummarize={() => send('Summarize the current page.')} />
       ) : (
         <MessageList messages={messages} running={running} live={live} />
       )}
@@ -105,7 +111,7 @@ export function Chat(props: {
           {error}
         </div>
       )}
-      <Composer running={running} onSend={send} onStop={stop} />
+      <Composer running={running} onSend={send} onStop={stop} draft={draft} />
     </div>
   );
 }

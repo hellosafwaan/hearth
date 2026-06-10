@@ -1,5 +1,7 @@
 const TOOL_LABELS: Record<string, string> = {
   screenshot: '📸 Screenshot',
+  read_page: '📄 Read page',
+  get_selected_text: '✂️ Selection',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

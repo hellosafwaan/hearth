@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ComposerDraft } from './Chat';
 
 export function Composer(props: {
   running: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
+  draft?: ComposerDraft | null;
 }) {
-  const { running, onSend, onStop } = props;
+  const { running, onSend, onStop, draft } = props;
   const [text, setText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // A new draft (e.g. from highlight-and-ask) replaces the composer content.
+  useEffect(() => {
+    if (!draft) return;
+    setText(draft.text);
+    textareaRef.current?.focus();
+  }, [draft?.id]);
 
   function submit() {
     const value = text.trim();
@@ -19,6 +29,7 @@ export function Composer(props: {
     <div className="border-t border-zinc-800 p-2.5">
       <div className="flex items-end gap-2">
         <textarea
+          ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
