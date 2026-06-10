@@ -61,11 +61,16 @@ export async function sendToActiveTab<T extends ContentRequest>(
     return await browser.tabs.sendMessage(tab.id!, request);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const granted = await browser.permissions
+      .contains({ origins: ['<all_urls>'] })
+      .catch(() => false);
     return {
       ok: false,
-      error:
-        `Cannot access this page (${message}). It may be a browser-internal page, ` +
-        'a store page, or a tab that needs to be reloaded.',
+      error: granted
+        ? `Cannot access this page (${message}). It may be a browser-internal page, ` +
+          'a store page, or a tab that needs to be reloaded.'
+        : 'Page access has not been granted. Ask the user to click "Grant page access" ' +
+          'in the sidebar, then try again.',
     };
   }
 }

@@ -1,6 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { APP_NAME, MODELS } from '../lib/constants';
 import { exportAllData, importData } from '../lib/db/export';
+import {
+  hasPageAccess,
+  requestPageAccess,
+  requestServerAccess,
+  revokePageAccess,
+  watchPermissions,
+} from '../lib/permissions';
 import { createProvider } from '../lib/providers';
 import { listOpenAICompatibleModels } from '../lib/providers/openai-compatible';
 import {
@@ -24,9 +31,16 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [saved, setSaved] = useState(false);
   const [localModels, setLocalModels] = useState<string[] | null>(null);
   const [dataStatus, setDataStatus] = useState<string | null>(null);
+  const [pageAccess, setPageAccess] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocal = draft.provider === 'openai-compatible';
+
+  useEffect(() => {
+    const refresh = () => hasPageAccess().then(setPageAccess);
+    refresh();
+    return watchPermissions(refresh);
+  }, []);
 
   function update(patch: Partial<Settings>) {
     setDraft((d) => ({ ...d, ...patch }));
@@ -43,6 +57,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   }
 
   async function save() {
+    if (isLocal) await requestServerAccess(draft.baseUrl.trim());
     await setSettings({ ...draft, apiKey: draft.apiKey.trim(), baseUrl: draft.baseUrl.trim() });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
@@ -52,6 +67,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   async function testConnection() {
     setTest({ state: 'testing' });
     try {
+      if (isLocal) await requestServerAccess(draft.baseUrl);
       await createProvider(draft).validateKey(draft.model);
       setTest({ state: 'ok' });
     } catch (err) {
@@ -61,6 +77,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
 
   async function fetchModels() {
     try {
+      await requestServerAccess(draft.baseUrl);
       const models = await listOpenAICompatibleModels({
         baseUrl: draft.baseUrl,
         apiKey: draft.apiKey || undefined,
@@ -276,6 +293,34 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
       {test.state === 'error' && (
         <p className="text-xs break-words whitespace-pre-line text-red-400">{test.message}</p>
       )}
+
+      <div className="space-y-1.5">
+        <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
+          Page access
+        </span>
+        <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5">
+          <span className="text-xs text-zinc-300">
+            {pageAccess ? 'Granted — page tools enabled' : 'Not granted — chat only'}
+          </span>
+          {pageAccess ? (
+            <button
+              type="button"
+              onClick={() => revokePageAccess()}
+              className="text-[0.7rem] text-zinc-500 hover:text-red-400"
+            >
+              Revoke
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => requestPageAccess()}
+              className="rounded border border-sky-800 px-2 py-1 text-[0.7rem] text-sky-300 hover:bg-sky-950/50"
+            >
+              Grant
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="space-y-1.5">
         <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">

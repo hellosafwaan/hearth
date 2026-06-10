@@ -12,10 +12,12 @@ export default defineConfig({
     description:
       'Privacy-first AI sidebar. Bring your own key — nothing leaves your device except your own API calls.',
     permissions: ['tabs', 'storage', 'scripting', 'contextMenus'],
-    // <all_urls> lets the screenshot tool capture any tab without a per-capture
-    // user gesture (activeTab alone breaks agent-initiated captures).
-    // TODO(v2): move to optional host permissions requested at first use.
-    host_permissions: ['<all_urls>'],
+    // Host access is requested at runtime (see lib/permissions.ts) so the
+    // install prompt stays clean. Chrome MV3 and Firefox MV2 use different
+    // manifest keys for optional origins.
+    ...(browser === 'firefox'
+      ? { optional_permissions: ['<all_urls>'] }
+      : { optional_host_permissions: ['<all_urls>'] }),
     action: {
       default_title: 'Sidekick',
     },

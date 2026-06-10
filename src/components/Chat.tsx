@@ -8,9 +8,11 @@ import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
 import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
 import { ACTING_TOOLS, toolDefinitions } from '../lib/tools/definitions';
 import { toolRegistry } from '../lib/tools/registry';
+import { shrinkImagesForStorage } from '../lib/image';
 import { ApprovalCard, type ApprovalDecision, type PendingApproval } from './ApprovalCard';
 import { Composer } from './Composer';
 import { MessageList } from './MessageList';
+import { PermissionBanner } from './PermissionBanner';
 
 async function getActiveTabOrigin(): Promise<string | null> {
   try {
@@ -122,7 +124,7 @@ export function Chat(props: {
           },
           onToolStart: (part) => setLive((s) => ({ ...s, toolName: part.name })),
           onToolMessage: async (message) => {
-            await appendMessage(convId, message);
+            await appendMessage(convId, await shrinkImagesForStorage(message));
             setLive((s) => ({ ...s, toolName: null }));
           },
         },
@@ -155,6 +157,7 @@ export function Chat(props: {
       ) : (
         <MessageList messages={messages} running={running} live={live} />
       )}
+      <PermissionBanner />
       {pendingApproval && <ApprovalCard approval={pendingApproval} />}
       {error && (
         <div className="mx-3 mb-2 rounded border border-red-900 bg-red-950/60 px-3 py-2 text-xs text-red-300">

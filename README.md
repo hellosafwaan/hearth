@@ -64,9 +64,12 @@ Settings, open any page, and hit **Summarize this page**.
 
 ## Permissions note
 
-v1 uses `<all_urls>` host permission so the screenshot tool works without a
-per-capture user gesture. TODO(v2): switch to optional host permissions
-requested on first use.
+Host access is **optional**, requested at runtime: the install prompt stays
+clean, and the sidebar shows a one-time "Grant page access" button (revocable
+in Settings). Without the grant the assistant is chat-only. Local/hosted server
+origins for the OpenAI-compatible provider are requested when you save those
+settings. Stored screenshots are downscaled to ≤768px to keep IndexedDB and
+follow-up token costs small — the live turn still sees full resolution.
 
 ## Local models
 
@@ -82,4 +85,5 @@ Settings → Provider → "Local / OpenAI-compatible (free)".
 ## Roadmap
 
 - Gemini adapter behind the existing provider interface
-- Optional host permissions (replace `<all_urls>`) before store submission
+- Pick the final name, then rename (two code locations + folder/repo) and
+  prepare store listings
