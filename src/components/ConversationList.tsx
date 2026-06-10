@@ -8,24 +8,24 @@ export function ConversationList(props: {
   const conversations = useLiveQuery(listConversations, [], []);
 
   if (conversations.length === 0) {
-    return <p className="p-4 text-center text-xs text-zinc-600">No conversations yet.</p>;
+    return <p className="p-4 text-center text-body-sm text-faint">No conversations yet.</p>;
   }
 
   return (
-    <ul className="divide-y divide-zinc-900 overflow-y-auto">
+    <ul className="h-full space-y-1 overflow-y-auto p-2">
       {conversations.map((c) => (
         <li key={c.id} className="group flex items-center">
           <button
             type="button"
             onClick={() => props.onSelect(c.id)}
-            className={`min-w-0 flex-1 px-4 py-2.5 text-left transition-colors hover:bg-zinc-900 ${
-              c.id === props.activeId ? 'bg-zinc-900' : ''
+            className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-raised ${
+              c.id === props.activeId ? 'bg-surface-raised' : ''
             }`}
           >
-            <span className="block truncate text-xs text-zinc-300">
+            <span className="block truncate text-body-sm font-medium text-text">
               {c.title || 'Untitled'}
             </span>
-            <span className="block font-mono text-[0.65rem] text-zinc-600">
+            <span className="block font-mono text-label-sm text-faint">
               {new Date(c.updatedAt).toLocaleString()}
             </span>
           </button>
@@ -33,7 +33,7 @@ export function ConversationList(props: {
             type="button"
             title="Delete conversation"
             onClick={() => deleteConversation(c.id)}
-            className="px-3 text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400"
+            className="px-2.5 text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger"
           >
             ✕
           </button>

@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { MessageRow } from '../lib/db/schema';
 import type { MessagePart } from '../lib/providers/types';
 import type { LiveState } from './Chat';
 import { ToolChip } from './ToolChip';
+import { Banner, Spinner } from './ui';
 
 export function MessageList(props: {
   messages: MessageRow[];
@@ -11,35 +12,70 @@ export function MessageList(props: {
   live: LiveState;
 }) {
   const { messages, running, live } = props;
+  const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Follow the stream only while the user is at the bottom; scrolling up
+  // pauses auto-scroll and shows the jump pill instead.
+  const [following, setFollowing] = useState(true);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages, live.streamText, live.toolNames, running]);
+    if (following) bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages, live.streamText, live.toolNames, running, following]);
+
+  function onScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    setFollowing(nearBottom);
+  }
+
+  function jumpToLatest() {
+    setFollowing(true);
+    bottomRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }
 
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
-      {messages.map((message) => (
-        <Message key={message.id} role={message.role} parts={message.parts} />
-      ))}
+    <div className="relative min-h-0 flex-1">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="h-full space-y-3 overflow-y-auto px-3 py-3"
+      >
+        {messages.map((message) => (
+          <Message key={message.id} role={message.role} parts={message.parts} />
+        ))}
 
-      {live.streamText && (
-        <div className="markdown max-w-full text-zinc-200">
-          <ReactMarkdown>{live.streamText}</ReactMarkdown>
-        </div>
-      )}
-      {running && live.toolNames.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {live.toolNames.map((name, i) => (
-            <ToolChip key={`${name}-${i}`} name={name} pending />
-          ))}
-        </div>
-      )}
-      {running && !live.streamText && live.toolNames.length === 0 && (
-        <div className="animate-pulse text-xs text-zinc-500">thinking…</div>
-      )}
+        {live.streamText && (
+          <div className="markdown max-w-full">
+            <ReactMarkdown>{live.streamText}</ReactMarkdown>
+          </div>
+        )}
+        {running && live.toolNames.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {live.toolNames.map((name, i) => (
+              <ToolChip key={`${name}-${i}`} name={name} pending />
+            ))}
+          </div>
+        )}
+        {running && !live.streamText && live.toolNames.length === 0 && (
+          <div className="flex items-center gap-2 text-body-sm text-faint">
+            <Spinner />
+            Thinking…
+          </div>
+        )}
 
-      <div ref={bottomRef} />
+        <div ref={bottomRef} />
+      </div>
+
+      {!following && (
+        <button
+          type="button"
+          onClick={jumpToLatest}
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-border bg-surface-overlay px-3 py-1 text-label-md text-muted shadow-overlay transition-colors hover:text-text"
+        >
+          ↓ Latest
+        </button>
+      )}
     </div>
   );
 }
@@ -53,14 +89,13 @@ function Message(props: { role: 'user' | 'assistant'; parts: MessagePart[] }) {
         switch (part.type) {
           case 'text':
             return role === 'user' ? (
-              <div
-                key={i}
-                className="ml-8 rounded-lg rounded-br-sm border border-zinc-800 bg-zinc-900 px-3 py-2 whitespace-pre-wrap text-zinc-200"
-              >
-                {part.text}
+              <div key={i} className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-bubble px-4 py-2.5 text-body-md whitespace-pre-wrap text-bubble-fg shadow-paper">
+                  {part.text}
+                </div>
               </div>
             ) : (
-              <div key={i} className="markdown max-w-full text-zinc-200">
+              <div key={i} className="markdown max-w-full">
                 <ReactMarkdown>{part.text}</ReactMarkdown>
               </div>
             );
@@ -74,7 +109,7 @@ function Message(props: { role: 'user' | 'assistant'; parts: MessagePart[] }) {
                 key={i}
                 src={`data:${part.mediaType};base64,${part.data}`}
                 alt="attachment"
-                className="max-h-40 rounded-md border border-zinc-800"
+                className="max-h-40 rounded-md border border-border"
               />
             );
         }
@@ -90,9 +125,9 @@ function ToolResult(props: { part: Extract<MessagePart, { type: 'tool_result' }>
 
   if (part.isError) {
     return (
-      <div className="rounded border border-amber-900/60 bg-amber-950/30 px-2.5 py-1.5 text-xs text-amber-300">
+      <Banner tone="caution" className="text-label-md">
         {text?.type === 'text' ? text.text : `${part.toolName} failed`}
-      </div>
+      </Banner>
     );
   }
 
@@ -101,7 +136,7 @@ function ToolResult(props: { part: Extract<MessagePart, { type: 'tool_result' }>
       <img
         src={`data:${image.mediaType};base64,${image.data}`}
         alt={`${part.toolName} result`}
-        className="max-h-32 w-auto rounded-md border border-zinc-800 opacity-90"
+        className="max-h-32 w-auto rounded-md border border-border opacity-90"
       />
     );
   }

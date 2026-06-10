@@ -5,9 +5,9 @@
  * ------------------------------------------------------------------------- */
 
 @font-face {
-  font-family: "Inter";
-  src: url("/fonts/inter-var.woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Manrope";
+  src: url("/fonts/manrope-var.woff2") format("woff2");
+  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
 }
@@ -21,79 +21,54 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Design tokens — the single source of truth (design/stitch/DESIGN.md).
+ * Design tokens — "Tactile Minimalism" from the Stitch screens
+ * (design/stitch/sidekick-*-paper.html). Warm paper surfaces, slate primary,
+ * soft shadows, generous radii.
  *
- * Components never use raw palette utilities (zinc-*, emerald-*): they use
- * the semantic tokens below. Dark is the default; light overrides the same
- * variables under prefers-color-scheme.
+ * Components never use raw palette utilities: they use the semantic tokens.
  * ------------------------------------------------------------------------- */
 
 :root {
-  /* Surfaces: base page → raised cards/inputs → overlays (menus, sheets) */
-  --sk-surface: #09090b;
-  --sk-surface-raised: #18181b;
-  --sk-surface-overlay: #1f1f23;
-  --sk-surface-hover: #27272a;
+  /* Surfaces: warm paper page → tonal cards → white floating elements */
+  --sk-surface: #fcf9f8;
+  --sk-surface-raised: #f0edec;
+  --sk-surface-overlay: #ffffff;
+  --sk-surface-hover: #eae7e7;
 
-  /* Borders */
-  --sk-border: #27272a;
-  --sk-border-strong: #3f3f46;
+  /* Borders — Stitch uses outline-variant at low opacity; keep them whisper-quiet */
+  --sk-border: #e8e5e3;
+  --sk-border-strong: #c4c6cc;
 
   /* Text */
-  --sk-text: #f4f4f5;
-  --sk-text-muted: #a1a1aa;
-  --sk-text-faint: #71717a;
+  --sk-text: #1b1c1b;
+  --sk-text-muted: #43474c;
+  --sk-text-faint: #74777c;
 
-  /* Accent (emerald): primary actions, success, running states */
-  --sk-accent: #10b981;
-  --sk-accent-soft: rgba(16, 185, 129, 0.12);
-  --sk-accent-strong: #4edea3;
-  --sk-accent-fg: #022c1e;
+  /* Accent (slate): primary actions, active states, links */
+  --sk-accent: #455565;
+  --sk-accent-soft: rgba(69, 85, 101, 0.1);
+  --sk-accent-strong: #394858;
+  --sk-accent-fg: #ffffff;
 
-  /* Caution (amber): parameters, warnings */
-  --sk-caution: #f59e0b;
-  --sk-caution-soft: rgba(245, 158, 11, 0.12);
+  /* User chat bubble (primary-container in the Stitch theme) */
+  --sk-bubble: #5d6d7e;
+  --sk-bubble-fg: #ffffff;
 
-  /* Danger (red): errors, destructive actions */
-  --sk-danger: #ef4444;
-  --sk-danger-strong: #ffb4ab;
-  --sk-danger-soft: rgba(239, 68, 68, 0.12);
+  /* Caution (warm amber) */
+  --sk-caution: #9a6700;
+  --sk-caution-soft: rgba(154, 103, 0, 0.1);
 
-  --sk-shadow-overlay: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-}
+  /* Danger */
+  --sk-danger: #ba1a1a;
+  --sk-danger-strong: #93000a;
+  --sk-danger-soft: #ffdad6;
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --sk-surface: #faf9f7;
-    --sk-surface-raised: #ffffff;
-    --sk-surface-overlay: #ffffff;
-    --sk-surface-hover: #f0efec;
-
-    --sk-border: #e7e5e0;
-    --sk-border-strong: #d6d3cd;
-
-    --sk-text: #1c1917;
-    --sk-text-muted: #57534e;
-    --sk-text-faint: #a8a29e;
-
-    --sk-accent: #059669;
-    --sk-accent-soft: rgba(5, 150, 105, 0.1);
-    --sk-accent-strong: #047857;
-    --sk-accent-fg: #ffffff;
-
-    --sk-caution: #d97706;
-    --sk-caution-soft: rgba(217, 119, 6, 0.12);
-
-    --sk-danger: #dc2626;
-    --sk-danger-strong: #b91c1c;
-    --sk-danger-soft: rgba(220, 38, 38, 0.08);
-
-    --sk-shadow-overlay: 0 10px 15px -3px rgba(28, 25, 23, 0.12);
-  }
+  /* "Paper" shadow — soft, barely-there lift for cards and the composer */
+  --sk-shadow-paper: 0 1px 2px rgba(27, 28, 27, 0.05), 0 4px 12px rgba(27, 28, 27, 0.06);
+  --sk-shadow-overlay: 0 10px 24px -6px rgba(27, 28, 27, 0.16);
 }
 
 @theme inline {
-  /* Colors → utilities like bg-surface, text-muted, border-border */
   --color-surface: var(--sk-surface);
   --color-surface-raised: var(--sk-surface-raised);
   --color-surface-overlay: var(--sk-surface-overlay);
@@ -107,20 +82,23 @@
   --color-accent-soft: var(--sk-accent-soft);
   --color-accent-strong: var(--sk-accent-strong);
   --color-accent-fg: var(--sk-accent-fg);
+  --color-bubble: var(--sk-bubble);
+  --color-bubble-fg: var(--sk-bubble-fg);
   --color-caution: var(--sk-caution);
   --color-caution-soft: var(--sk-caution-soft);
   --color-danger: var(--sk-danger);
   --color-danger-strong: var(--sk-danger-strong);
   --color-danger-soft: var(--sk-danger-soft);
 
+  --shadow-paper: var(--sk-shadow-paper);
   --shadow-overlay: var(--sk-shadow-overlay);
 }
 
 @theme {
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Type scale (DESIGN.md): label-sm 11, label-md 12, body-sm 13, body-md 14, headline 16 */
+  /* Type scale: label-sm 11, label-md 12, body-sm 13, body-md 14, headline 16, headline-lg 20 */
   --text-label-sm: 0.6875rem;
   --text-label-sm--line-height: 0.875rem;
   --text-label-md: 0.75rem;
@@ -128,9 +106,11 @@
   --text-body-sm: 0.8125rem;
   --text-body-sm--line-height: 1.125rem;
   --text-body-md: 0.875rem;
-  --text-body-md--line-height: 1.25rem;
+  --text-body-md--line-height: 1.3125rem;
   --text-headline: 1rem;
   --text-headline--line-height: 1.5rem;
+  --text-headline-lg: 1.25rem;
+  --text-headline-lg--line-height: 1.75rem;
 }
 
 /* ---------------------------------------------------------------------------
@@ -193,7 +173,7 @@ body {
 }
 
 .markdown pre {
-  @apply bg-surface-raised border-border overflow-x-auto rounded-md border p-2.5;
+  @apply bg-surface-raised border-border overflow-x-auto rounded-lg border p-2.5;
 }
 
 .markdown pre code {
@@ -201,7 +181,7 @@ body {
 }
 
 .markdown a {
-  @apply text-accent-strong underline underline-offset-2;
+  @apply text-accent underline underline-offset-2;
 }
 
 .markdown blockquote {

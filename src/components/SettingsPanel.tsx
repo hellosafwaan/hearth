@@ -19,6 +19,7 @@ import {
   type ProviderKind,
   type Settings,
 } from '../lib/settings/storage';
+import { Banner, Button, Card, Field, Input, Select, Toggle } from './ui';
 
 type TestStatus = { state: 'idle' } | { state: 'testing' } | { state: 'ok' } | { state: 'error'; message: string };
 
@@ -136,290 +137,234 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
     : !!draft.apiKey.trim();
 
   return (
-    <div className="space-y-5 overflow-y-auto p-4">
+    <div className="h-full space-y-6 overflow-y-auto p-4">
       {!props.settings.apiKey && props.settings.provider === 'anthropic' && (
-        <p className="text-xs leading-relaxed text-zinc-400">
+        <p className="text-body-sm leading-relaxed text-muted">
           {APP_NAME} talks directly to the model provider you choose — no middleman server.
           Use your own Anthropic key, or run a free local model with LM Studio / Ollama.
         </p>
       )}
 
-      <Field label="Provider">
-        <select
-          value={draft.provider}
-          onChange={(e) => switchProvider(e.target.value as ProviderKind)}
-          className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
-        >
-          <option value="anthropic">Anthropic (Claude)</option>
-          <option value="gemini">Google (Gemini)</option>
-          <option value="openai-compatible">Local / OpenAI-compatible (free)</option>
-        </select>
-      </Field>
+      <Section title="Provider">
+        <Field label="Provider">
+          <Select
+            value={draft.provider}
+            onChange={(e) => switchProvider(e.target.value as ProviderKind)}
+          >
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="gemini">Google (Gemini)</option>
+            <option value="openai-compatible">Local / OpenAI-compatible (free)</option>
+          </Select>
+        </Field>
+
+        {isLocal && (
+          <>
+            <Field label="Server URL">
+              <Input
+                mono
+                value={draft.baseUrl}
+                onChange={(e) => update({ baseUrl: e.target.value })}
+                placeholder="http://localhost:1234/v1"
+                spellCheck={false}
+              />
+              <div className="mt-2 flex gap-1.5">
+                {BASE_URL_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => update({ baseUrl: preset.url })}
+                    className={`rounded-full border px-3 py-1 text-label-md transition-colors ${
+                      draft.baseUrl === preset.url
+                        ? 'border-accent bg-accent-soft text-accent'
+                        : 'border-border text-faint hover:text-muted'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Model">
+              <div className="flex gap-2">
+                {localModels ? (
+                  <Select
+                    value={draft.model}
+                    onChange={(e) => update({ model: e.target.value })}
+                    className="flex-1"
+                  >
+                    {localModels.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    mono
+                    value={draft.model}
+                    onChange={(e) => update({ model: e.target.value })}
+                    placeholder="qwen/qwen3-4b"
+                    spellCheck={false}
+                    className="flex-1"
+                  />
+                )}
+                <Button onClick={fetchModels}>Fetch</Button>
+              </div>
+            </Field>
+
+            <Field label="API key (optional for local servers)">
+              <KeyInput
+                value={draft.apiKey}
+                show={showKey}
+                onToggleShow={() => setShowKey(!showKey)}
+                onChange={(apiKey) => update({ apiKey })}
+                placeholder="leave empty for LM Studio / Ollama"
+              />
+            </Field>
+          </>
+        )}
+
+        {isGemini && (
+          <>
+            <Field label="Gemini API key">
+              <KeyInput
+                value={draft.apiKey}
+                show={showKey}
+                onToggleShow={() => setShowKey(!showKey)}
+                onChange={(apiKey) => update({ apiKey })}
+                placeholder="AIza…"
+              />
+            </Field>
+            <Field label="Model">
+              <Select value={draft.model} onChange={(e) => update({ model: e.target.value })}>
+                {GEMINI_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </>
+        )}
+
+        {!isLocal && !isGemini && (
+          <>
+            <Field label="Anthropic API key">
+              <KeyInput
+                value={draft.apiKey}
+                show={showKey}
+                onToggleShow={() => setShowKey(!showKey)}
+                onChange={(apiKey) => update({ apiKey })}
+                placeholder="sk-ant-…"
+              />
+            </Field>
+            <Field label="Model">
+              <Select value={draft.model} onChange={(e) => update({ model: e.target.value })}>
+                {MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </>
+        )}
+
+        <div className="flex items-center gap-2">
+          <Button variant="primary" onClick={save} disabled={!canSave}>
+            {saved ? 'Saved ✓' : 'Save'}
+          </Button>
+          <Button onClick={testConnection} disabled={!canSave || test.state === 'testing'}>
+            {test.state === 'testing' ? 'Testing…' : 'Test connection'}
+          </Button>
+        </div>
+
+        {test.state === 'ok' && <p className="text-body-sm text-accent">Connection works ✓</p>}
+        {test.state === 'error' && (
+          <Banner tone="danger" className="whitespace-pre-line">
+            {test.message}
+          </Banner>
+        )}
+      </Section>
 
       {isLocal && (
-        <>
-          <Field label="Server URL">
-            <input
-              type="text"
-              value={draft.baseUrl}
-              onChange={(e) => update({ baseUrl: e.target.value })}
-              placeholder="http://localhost:1234/v1"
-              spellCheck={false}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-600"
+        <Section title="Capabilities">
+          <Card className="space-y-4 p-4">
+            <Toggle
+              checked={draft.supportsTools}
+              onChange={(supportsTools) => update({ supportsTools })}
+              label="Tool calling"
+              description="Page tools and actions"
             />
-            <div className="mt-1.5 flex gap-1.5">
-              {BASE_URL_PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => update({ baseUrl: preset.url })}
-                  className={`rounded border px-2 py-1 text-[0.65rem] transition-colors ${
-                    draft.baseUrl === preset.url
-                      ? 'border-emerald-700 text-emerald-400'
-                      : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Model">
-            <div className="flex gap-2">
-              {localModels ? (
-                <select
-                  value={draft.model}
-                  onChange={(e) => update({ model: e.target.value })}
-                  className="flex-1 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
-                >
-                  {localModels.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  value={draft.model}
-                  onChange={(e) => update({ model: e.target.value })}
-                  placeholder="qwen/qwen3-4b"
-                  spellCheck={false}
-                  className="flex-1 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-600"
-                />
-              )}
-              <button
-                type="button"
-                onClick={fetchModels}
-                className="rounded-md border border-zinc-800 px-2.5 text-xs text-zinc-400 hover:bg-zinc-900"
-              >
-                Fetch
-              </button>
-            </div>
-          </Field>
-
-          <Field label="Model capabilities">
-            <div className="space-y-1.5">
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-300">
-                <input
-                  type="checkbox"
-                  checked={draft.supportsTools}
-                  onChange={(e) => update({ supportsTools: e.target.checked })}
-                  className="accent-emerald-600"
-                />
-                Tool calling (page tools, actions)
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-300">
-                <input
-                  type="checkbox"
-                  checked={draft.supportsVision}
-                  onChange={(e) => update({ supportsVision: e.target.checked })}
-                  className="accent-emerald-600"
-                />
-                Vision (screenshot tool)
-              </label>
-              <p className="text-[0.65rem] text-zinc-600">
-                Turn off what your model can't do — tools quietly disable instead of erroring.
-              </p>
-            </div>
-          </Field>
-
-          <Field label="API key (optional for local servers)">
-            <KeyInput
-              value={draft.apiKey}
-              show={showKey}
-              onToggleShow={() => setShowKey(!showKey)}
-              onChange={(apiKey) => update({ apiKey })}
-              placeholder="leave empty for LM Studio / Ollama"
+            <Toggle
+              checked={draft.supportsVision}
+              onChange={(supportsVision) => update({ supportsVision })}
+              label="Vision"
+              description="Screenshot tool"
             />
-          </Field>
-        </>
-      )}
-
-      {isGemini && (
-        <>
-          <Field label="Gemini API key">
-            <KeyInput
-              value={draft.apiKey}
-              show={showKey}
-              onToggleShow={() => setShowKey(!showKey)}
-              onChange={(apiKey) => update({ apiKey })}
-              placeholder="AIza…"
-            />
-          </Field>
-
-          <Field label="Model">
-            <select
-              value={draft.model}
-              onChange={(e) => update({ model: e.target.value })}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
-            >
-              {GEMINI_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </>
-      )}
-
-      {!isLocal && !isGemini && (
-        <>
-          <Field label="Anthropic API key">
-            <KeyInput
-              value={draft.apiKey}
-              show={showKey}
-              onToggleShow={() => setShowKey(!showKey)}
-              onChange={(apiKey) => update({ apiKey })}
-              placeholder="sk-ant-…"
-            />
-          </Field>
-
-          <Field label="Model">
-            <select
-              value={draft.model}
-              onChange={(e) => update({ model: e.target.value })}
-              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
-            >
-              {MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </>
-      )}
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={save}
-          disabled={!canSave}
-          className="rounded-md border border-emerald-800 bg-emerald-950/50 px-4 py-2 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-950 disabled:opacity-40"
-        >
-          {saved ? 'Saved ✓' : 'Save'}
-        </button>
-        <button
-          type="button"
-          onClick={testConnection}
-          disabled={!canSave || test.state === 'testing'}
-          className="rounded-md border border-zinc-700 px-4 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-900 disabled:opacity-40"
-        >
-          {test.state === 'testing' ? 'Testing…' : 'Test connection'}
-        </button>
-      </div>
-
-      {test.state === 'ok' && <p className="text-xs text-emerald-400">Connection works ✓</p>}
-      {test.state === 'error' && (
-        <p className="text-xs break-words whitespace-pre-line text-red-400">{test.message}</p>
-      )}
-
-      <div className="space-y-1.5">
-        <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
-          Page access
-        </span>
-        <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5">
-          <span className="text-xs text-zinc-300">
-            {pageAccess ? 'Granted — page tools enabled' : 'Not granted — chat only'}
-          </span>
-          {pageAccess ? (
-            <button
-              type="button"
-              onClick={() => revokePageAccess()}
-              className="text-[0.7rem] text-zinc-500 hover:text-red-400"
-            >
-              Revoke
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => requestPageAccess()}
-              className="rounded border border-sky-800 px-2 py-1 text-[0.7rem] text-sky-300 hover:bg-sky-950/50"
-            >
-              Grant
-            </button>
-          )}
-        </div>
-      </div>
-
-      {!import.meta.env.FIREFOX && (
-        <div className="space-y-1.5">
-          <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
-            Deep inspection (debugger)
-          </span>
-          <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5">
-            <span className="text-xs text-zinc-300">
-              {debuggerAccess
-                ? 'Granted — full network/console tools available'
-                : 'Not granted — lightweight capture only'}
-            </span>
-            {debuggerAccess ? (
-              <button
-                type="button"
-                onClick={() => revokeDebuggerPermission()}
-                className="text-[0.7rem] text-zinc-500 hover:text-red-400"
-              >
-                Revoke
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => requestDebuggerPermission()}
-                className="rounded border border-sky-800 px-2 py-1 text-[0.7rem] text-sky-300 hover:bg-sky-950/50"
-              >
-                Grant
-              </button>
-            )}
-          </div>
-          <p className="text-[0.65rem] text-zinc-600">
-            Lets the assistant read response bodies and the full console via a per-tab debugger
-            session you approve each time. Chrome shows a banner while one is active.
+          </Card>
+          <p className="text-label-sm text-faint">
+            Turn off what your model can't do — tools quietly disable instead of erroring.
           </p>
-        </div>
+        </Section>
       )}
 
-      <div className="space-y-1.5">
-        <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
-          Chat history (stays on this device)
-        </span>
+      <Section title="Permissions">
+        <PermissionRow
+          label="Page access"
+          status={pageAccess ? 'Granted — page tools enabled' : 'Not granted — chat only'}
+          granted={!!pageAccess}
+          onGrant={() => requestPageAccess()}
+          onRevoke={() => revokePageAccess()}
+        />
+        {!import.meta.env.FIREFOX && (
+          <>
+            <PermissionRow
+              label="Deep inspection (debugger)"
+              status={
+                debuggerAccess
+                  ? 'Granted — full network/console tools'
+                  : 'Not granted — lightweight capture only'
+              }
+              granted={!!debuggerAccess}
+              onGrant={() => requestDebuggerPermission()}
+              onRevoke={() => revokeDebuggerPermission()}
+            />
+            <p className="text-label-sm text-faint">
+              Lets the assistant read response bodies and the full console via a per-tab debugger
+              session you approve each time. Chrome shows a banner while one is active.
+            </p>
+          </>
+        )}
+        {props.settings.autoApproveOrigins.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="font-mono text-label-sm tracking-wider text-faint uppercase">
+              Trusted sites (no approval asked)
+            </span>
+            <Card className="divide-y divide-border">
+              {props.settings.autoApproveOrigins.map((origin) => (
+                <div key={origin} className="flex items-center justify-between px-3 py-2">
+                  <span className="truncate font-mono text-label-md text-muted">{origin}</span>
+                  <button
+                    type="button"
+                    title={`Stop auto-approving ${origin}`}
+                    onClick={() => removeAutoApproveOrigin(origin)}
+                    className="ml-2 text-faint transition-colors hover:text-danger"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </Card>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Data">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={exportChats}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-900"
-          >
-            Export JSON
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-900"
-          >
-            Import JSON
-          </button>
+          <Button onClick={exportChats}>Export JSON</Button>
+          <Button onClick={() => fileInputRef.current?.click()}>Import JSON</Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -432,35 +377,61 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
             }}
           />
         </div>
-        {dataStatus && <p className="text-xs text-zinc-400">{dataStatus}</p>}
-        <p className="text-[0.65rem] text-zinc-600">
-          Exports contain conversations only — never your API key.
+        {dataStatus && <p className="text-body-sm text-muted">{dataStatus}</p>}
+        <p className="text-label-sm text-faint">
+          Chat history stays on this device. Exports contain conversations only — never your API
+          key.
         </p>
-      </div>
-
-      {props.settings.autoApproveOrigins.length > 0 && (
-        <Field label="Trusted sites (actions run without approval)">
-          <ul className="space-y-1">
-            {props.settings.autoApproveOrigins.map((origin) => (
-              <li
-                key={origin}
-                className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5"
-              >
-                <span className="truncate font-mono text-[0.7rem] text-zinc-300">{origin}</span>
-                <button
-                  type="button"
-                  title={`Stop auto-approving ${origin}`}
-                  onClick={() => removeAutoApproveOrigin(origin)}
-                  className="ml-2 text-zinc-600 hover:text-red-400"
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-        </Field>
-      )}
+      </Section>
     </div>
+  );
+}
+
+function Section(props: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <h3 className="font-mono text-label-sm font-medium tracking-wider text-faint uppercase">
+        {props.title}
+      </h3>
+      {props.children}
+    </section>
+  );
+}
+
+function PermissionRow(props: {
+  label: string;
+  status: string;
+  granted: boolean;
+  onGrant: () => void;
+  onRevoke: () => void;
+}) {
+  return (
+    <Card className="flex items-center justify-between gap-2 px-3 py-2.5">
+      <div className="min-w-0">
+        <span className="block text-body-sm font-medium text-text">{props.label}</span>
+        <span className="flex items-center gap-1.5 text-label-sm text-faint">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              props.granted ? 'bg-accent' : 'bg-border-strong'
+            }`}
+          />
+          {props.status}
+        </span>
+      </div>
+      {props.granted ? (
+        <button
+          type="button"
+          onClick={props.onRevoke}
+          className="shrink-0 text-label-md text-faint transition-colors hover:text-danger"
+        >
+          Revoke
+        </button>
+      ) : (
+        <Button size="sm" variant="primary" onClick={props.onGrant} className="shrink-0">
+          Grant
+        </Button>
+      )}
+    </Card>
   );
 }
 
@@ -473,33 +444,17 @@ function KeyInput(props: {
 }) {
   return (
     <div className="flex gap-2">
-      <input
+      <Input
+        mono
         type={props.show ? 'text' : 'password'}
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
         placeholder={props.placeholder}
         autoComplete="off"
         spellCheck={false}
-        className="flex-1 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-zinc-600"
+        className="flex-1"
       />
-      <button
-        type="button"
-        onClick={props.onToggleShow}
-        className="rounded-md border border-zinc-800 px-2.5 text-xs text-zinc-400 hover:bg-zinc-900"
-      >
-        {props.show ? 'Hide' : 'Show'}
-      </button>
+      <Button onClick={props.onToggleShow}>{props.show ? 'Hide' : 'Show'}</Button>
     </div>
-  );
-}
-
-function Field(props: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
-        {props.label}
-      </span>
-      {props.children}
-    </label>
   );
 }

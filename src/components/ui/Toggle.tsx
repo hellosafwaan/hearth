@@ -26,12 +26,13 @@ export function Toggle(props: {
         disabled={props.disabled}
         onClick={() => props.onChange(!props.checked)}
         className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${
-          props.checked ? 'bg-accent' : 'bg-surface-hover border border-border-strong'
+          props.checked ? 'bg-accent' : 'bg-border-strong'
         }`}
       >
+        {/* Track is 36px, thumb 16px, 2px inset each side → 16px of travel. */}
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-            props.checked ? 'translate-x-[18px]' : 'translate-x-0.5'
+          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+            props.checked ? 'translate-x-4' : 'translate-x-0'
           }`}
         />
       </button>

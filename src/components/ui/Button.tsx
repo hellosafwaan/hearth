@@ -12,8 +12,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: 'px-2.5 py-1 text-label-md rounded-sm',
-  md: 'px-3.5 py-2 text-body-sm rounded-md',
+  sm: 'px-2.5 py-1 text-label-md rounded-md',
+  md: 'px-4 py-2 text-body-sm rounded-lg',
 };
 
 export function Button({

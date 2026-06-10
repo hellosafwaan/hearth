@@ -11,7 +11,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement> & { overlay?: boolean }) {
   return (
     <div
-      className={`rounded-lg border border-border ${
+      className={`rounded-xl border border-border ${
         overlay ? 'bg-surface-overlay shadow-overlay' : 'bg-surface-raised'
       } ${className}`}
       {...rest}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, Card } from './ui';
 
 export interface ApprovalDecision {
   approved: boolean;
@@ -14,68 +15,107 @@ export interface PendingApproval {
   resolve: (decision: ApprovalDecision) => void;
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  click_element: 'Click element',
-  fill_form: 'Fill field',
-  navigate_to: 'Navigate',
-  open_tab: 'Open new tab',
+const ACTIONS: Record<string, { label: string; description: string }> = {
+  click_element: {
+    label: 'Click element',
+    description: 'Sidekick wants to click an element on the current page.',
+  },
+  fill_form: {
+    label: 'Fill out a field',
+    description:
+      'Sidekick wants to type into a field on the current page. This may submit data from your session.',
+  },
+  navigate_to: {
+    label: 'Navigate',
+    description: 'Sidekick wants to navigate this tab to a different URL.',
+  },
+  open_tab: {
+    label: 'Open new tab',
+    description: 'Sidekick wants to open a URL in a new tab.',
+  },
+  reload_and_capture: {
+    label: 'Reload with capture',
+    description:
+      'Sidekick wants to reload this page with console/network capture armed. Unsaved page state may be lost.',
+  },
+  enable_deep_inspection: {
+    label: 'Attach debugger',
+    description:
+      'Sidekick wants to attach a debugger to this tab for full network and console visibility. Chrome will show a debugging banner while it is active.',
+  },
 };
 
 export function ApprovalCard(props: { approval: PendingApproval }) {
   const { approval } = props;
   const [remember, setRemember] = useState(false);
 
-  const label = ACTION_LABELS[approval.name] ?? approval.name;
-  const details = Object.entries(approval.input).map(
-    ([key, value]) => `${key}: ${typeof value === 'string' ? value : JSON.stringify(value)}`,
-  );
+  const action = ACTIONS[approval.name] ?? {
+    label: approval.name,
+    description: 'Sidekick wants to perform this action.',
+  };
+  const details = Object.entries(approval.input);
 
   return (
-    <div className="mx-3 mb-2 space-y-2 rounded-md border border-amber-700/60 bg-amber-950/30 p-3">
-      <div className="flex items-center gap-2">
-        <span className="text-amber-400">⚠</span>
-        <span className="text-xs font-semibold text-amber-200">
-          {label}
-          {approval.host && <span className="font-normal text-amber-400"> on {approval.host}</span>}
+    <Card overlay className="mx-3 mb-2 space-y-3 p-4">
+      <div>
+        <span className="font-mono text-label-sm tracking-wider text-faint uppercase">
+          Action required
         </span>
+        <h3 className="text-headline font-bold text-text">{action.label}</h3>
       </div>
 
+      {approval.host && (
+        <div className="flex items-center gap-2 rounded-lg bg-surface-raised px-3 py-2">
+          <span className="font-mono text-label-sm text-faint">Target</span>
+          <span className="truncate font-mono text-label-md font-medium text-text">
+            {approval.host}
+          </span>
+        </div>
+      )}
+
+      <p className="text-body-sm text-muted">{action.description}</p>
+
       {details.length > 0 && (
-        <div className="rounded bg-zinc-950/60 px-2 py-1.5 font-mono text-[0.7rem] break-all text-zinc-300">
-          {details.map((line) => (
-            <div key={line}>{line}</div>
-          ))}
+        <div className="space-y-1">
+          <span className="font-mono text-label-sm text-faint">Payload</span>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface-raised px-3 py-2 font-mono text-label-md break-all text-muted">
+            {details.map(([key, value]) => (
+              <div key={key}>
+                <span className="text-faint">{key}:</span>{' '}
+                {typeof value === 'string' ? value : JSON.stringify(value)}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {approval.host && (
-        <label className="flex cursor-pointer items-center gap-2 text-[0.7rem] text-amber-300/80">
+        <label className="flex cursor-pointer items-center gap-2 text-label-md text-faint">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="accent-amber-500"
+            className="accent-(--sk-accent)"
           />
           Always allow actions on {approval.host}
         </label>
       )}
 
       <div className="flex gap-2">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          className="flex-1"
           onClick={() => approval.resolve({ approved: true, rememberOrigin: remember })}
-          className="flex-1 rounded-md border border-emerald-800 bg-emerald-950/50 px-3 py-1.5 text-xs font-medium text-emerald-300 transition-colors hover:bg-emerald-950"
         >
-          Approve
-        </button>
-        <button
-          type="button"
+          ✓ Approve
+        </Button>
+        <Button
+          className="flex-1"
           onClick={() => approval.resolve({ approved: false, rememberOrigin: false })}
-          className="flex-1 rounded-md border border-red-900 bg-red-950/40 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-950"
         >
-          Deny
-        </button>
+          ✕ Deny
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

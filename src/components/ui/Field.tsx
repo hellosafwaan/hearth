@@ -14,8 +14,8 @@ export function Field(props: { label: string; children: ReactNode; hint?: string
 }
 
 const CONTROL =
-  'w-full rounded-md border border-border bg-surface-raised px-3 py-2 text-body-sm text-text ' +
-  'placeholder-faint outline-none transition-colors focus:border-border-strong';
+  'w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-body-sm text-text ' +
+  'placeholder-faint outline-none transition-colors focus:border-accent';
 
 export function Input({
   mono = false,
