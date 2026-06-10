@@ -118,4 +118,65 @@ export const toolDefinitions: ToolDefinition[] = [
       required: ['url'],
     },
   },
+  {
+    name: 'get_page_tech',
+    description:
+      'Detect the technology stack of the current page: frameworks (React, Next.js, Vue…), CMS/platform ' +
+      '(WordPress, Shopify…), CSS frameworks, analytics, and infrastructure hints, with evidence. Call this ' +
+      'when the user asks what a site is built with. Heuristic — present findings as likely, not certain.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'get_page_metadata',
+    description:
+      'Get structured metadata for the current page: title, description, author, publish date, canonical ' +
+      'URL, language, OpenGraph/JSON-LD types, feeds, and approximate length. Cheaper than read_page when ' +
+      'the question is about the page rather than its full text.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'find_in_page',
+    description:
+      'Search the visible text of the current page for a phrase, scroll to and highlight the first match, ' +
+      'and return up to 5 matches with surrounding context. Use for locating specific content on long pages.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Text to search for (case-insensitive).' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'scroll',
+    description:
+      'Scroll the current page: "down"/"up" by one viewport, or jump to "top"/"bottom". Use before ' +
+      'screenshot to see content below the fold, or to load more of an infinite feed.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        direction: { type: 'string', enum: ['up', 'down', 'top', 'bottom'] },
+      },
+      required: ['direction'],
+    },
+  },
+  {
+    name: 'wait',
+    description:
+      'Pause for N seconds (0.5–10). Use after navigate_to, click_element, or scroll when the page needs ' +
+      'time to load before reading it.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        seconds: { type: 'number', description: 'Seconds to wait (default 2).' },
+      },
+    },
+  },
+  {
+    name: 'list_tabs',
+    description:
+      "List the open tabs in the user's current browser window (title, URL, which is active). Use when the " +
+      'user refers to their other tabs. Read-only — switching or closing tabs is not available.',
+    inputSchema: { type: 'object', properties: {} },
+  },
 ];

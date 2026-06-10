@@ -7,7 +7,11 @@ export type ContentRequest =
   | { type: 'get_selected_text' }
   | { type: 'get_interactive_elements' }
   | { type: 'click_element'; index: number }
-  | { type: 'fill_form'; index: number; value: string };
+  | { type: 'fill_form'; index: number; value: string }
+  | { type: 'get_page_tech' }
+  | { type: 'get_page_metadata' }
+  | { type: 'find_in_page'; query: string }
+  | { type: 'scroll'; direction: 'up' | 'down' | 'top' | 'bottom' };
 
 export interface PageContent {
   title: string;
@@ -24,6 +28,10 @@ export type ContentResponseData = {
   get_interactive_elements: { listing: string; count: number; url: string };
   click_element: { result: string };
   fill_form: { result: string };
+  get_page_tech: { report: string; url: string };
+  get_page_metadata: { report: string; url: string };
+  find_in_page: { result: string };
+  scroll: { result: string };
 };
 
 export type ContentResponse<T extends ContentRequest['type'] = ContentRequest['type']> =

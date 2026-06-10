@@ -18,6 +18,9 @@ server — your API key and chat history never leave your device.
 - **Persistent sidebar** — Chrome side panel / Firefox sidebar
 - **Page tools** — `read_page` (Mozilla Readability extraction),
   `get_selected_text`, and `screenshot`; the model picks the right one
+- **Page intelligence** — `get_page_tech` (what's this site built with —
+  framework/CMS/analytics fingerprinting with evidence), `get_page_metadata`,
+  `find_in_page` (scroll-to + highlight), `scroll`, `wait`, `list_tabs`
 - **Highlight and ask** — select text on any page → right-click →
   "Ask Sidekick about…" → sidebar opens with the quote pre-filled
 - **Acting tools with human approval** — `get_interactive_elements` (numbered

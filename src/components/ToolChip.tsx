@@ -7,6 +7,12 @@ const TOOL_LABELS: Record<string, string> = {
   fill_form: '⌨️ Fill',
   navigate_to: '🧭 Navigate',
   open_tab: '🗂️ New tab',
+  get_page_tech: '🧬 Tech stack',
+  get_page_metadata: 'ℹ️ Metadata',
+  find_in_page: '🔎 Find',
+  scroll: '↕️ Scroll',
+  wait: '⏳ Wait',
+  list_tabs: '🗃️ Tabs',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

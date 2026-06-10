@@ -1,8 +1,16 @@
 import type { ImagePart, TextPart } from '../providers/types';
 import { executeNavigateTo, executeOpenTab } from './executors/browser';
 import { executeClickElement, executeFillForm, executeGetInteractiveElements } from './executors/dom';
-import { executeGetSelectedText, executeReadPage } from './executors/page';
+import {
+  executeFindInPage,
+  executeGetPageMetadata,
+  executeGetPageTech,
+  executeGetSelectedText,
+  executeReadPage,
+  executeScroll,
+} from './executors/page';
 import { executeScreenshot } from './executors/screenshot';
+import { executeListTabs, executeWait } from './executors/utility';
 
 export interface ToolExecResult {
   content: (TextPart | ImagePart)[];
@@ -22,4 +30,10 @@ export const toolRegistry: Record<string, ToolExecutor> = {
   fill_form: executeFillForm,
   navigate_to: executeNavigateTo,
   open_tab: executeOpenTab,
+  get_page_tech: executeGetPageTech,
+  get_page_metadata: executeGetPageMetadata,
+  find_in_page: executeFindInPage,
+  scroll: executeScroll,
+  wait: executeWait,
+  list_tabs: executeListTabs,
 };

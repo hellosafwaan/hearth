@@ -29,6 +29,42 @@ export async function executeReadPage(): Promise<ToolExecResult> {
   };
 }
 
+export async function executeGetPageTech(): Promise<ToolExecResult> {
+  const response = await sendToActiveTab({ type: 'get_page_tech' });
+  if (!response.ok) return errorResult(response.error);
+  return { content: [{ type: 'text', text: `${response.data.url}\n\n${response.data.report}` }] };
+}
+
+export async function executeGetPageMetadata(): Promise<ToolExecResult> {
+  const response = await sendToActiveTab({ type: 'get_page_metadata' });
+  if (!response.ok) return errorResult(response.error);
+  return { content: [{ type: 'text', text: `${response.data.url}\n\n${response.data.report}` }] };
+}
+
+export async function executeFindInPage(input: Record<string, unknown>): Promise<ToolExecResult> {
+  if (typeof input.query !== 'string' || !input.query.trim()) {
+    return errorResult('find_in_page requires a non-empty string "query".');
+  }
+  const response = await sendToActiveTab({ type: 'find_in_page', query: input.query });
+  if (!response.ok) return errorResult(response.error);
+  return { content: [{ type: 'text', text: response.data.result }] };
+}
+
+const SCROLL_DIRECTIONS = new Set(['up', 'down', 'top', 'bottom']);
+
+export async function executeScroll(input: Record<string, unknown>): Promise<ToolExecResult> {
+  const direction = String(input.direction ?? 'down');
+  if (!SCROLL_DIRECTIONS.has(direction)) {
+    return errorResult('scroll requires "direction": one of up, down, top, bottom.');
+  }
+  const response = await sendToActiveTab({
+    type: 'scroll',
+    direction: direction as 'up' | 'down' | 'top' | 'bottom',
+  });
+  if (!response.ok) return errorResult(response.error);
+  return { content: [{ type: 'text', text: response.data.result }] };
+}
+
 export async function executeGetSelectedText(): Promise<ToolExecResult> {
   const response = await sendToActiveTab({ type: 'get_selected_text' });
   if (!response.ok) return errorResult(response.error);

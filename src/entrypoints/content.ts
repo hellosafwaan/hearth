@@ -2,6 +2,7 @@ import { Readability } from '@mozilla/readability';
 import { browser, defineContentScript } from '#imports';
 import { READ_PAGE_MAX_CHARS } from '../lib/constants';
 import { clickElement, fillForm, getInteractiveElements } from '../lib/dom-actions';
+import { findInPage, getPageMetadata, getPageTech, scrollPage } from '../lib/page-intel';
 import type { ContentRequest, ContentResponse, PageContent } from '../lib/messaging';
 
 function cap(text: string): { text: string; truncated: boolean } {
@@ -55,6 +56,14 @@ function handle(request: ContentRequest): ContentResponse {
       return { ok: true, data: clickElement(request.index) };
     case 'fill_form':
       return { ok: true, data: fillForm(request.index, request.value) };
+    case 'get_page_tech':
+      return { ok: true, data: getPageTech() };
+    case 'get_page_metadata':
+      return { ok: true, data: getPageMetadata() };
+    case 'find_in_page':
+      return { ok: true, data: findInPage(request.query) };
+    case 'scroll':
+      return { ok: true, data: scrollPage(request.direction) };
   }
 }
 
