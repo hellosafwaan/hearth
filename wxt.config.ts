@@ -19,6 +19,21 @@ export default defineConfig({
     action: {
       default_title: 'Sidekick',
     },
+    commands:
+      browser === 'firefox'
+        ? {
+            _execute_sidebar_action: {
+              suggested_key: { default: 'Alt+S' },
+              description: 'Toggle the sidebar',
+            },
+          }
+        : {
+            // With openPanelOnActionClick set, this opens the side panel.
+            _execute_action: {
+              suggested_key: { default: 'Alt+S' },
+              description: 'Open the sidebar',
+            },
+          },
     ...(browser === 'firefox'
       ? {
           browser_specific_settings: {

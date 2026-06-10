@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { APP_NAME, MODELS } from '../lib/constants';
+import { exportAllData, importData } from '../lib/db/export';
 import { createAnthropicProvider } from '../lib/providers/anthropic';
 import { removeAutoApproveOrigin, setSettings, type Settings } from '../lib/settings/storage';
 
@@ -11,6 +12,36 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [showKey, setShowKey] = useState(false);
   const [test, setTest] = useState<TestStatus>({ state: 'idle' });
   const [saved, setSaved] = useState(false);
+  const [dataStatus, setDataStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function exportChats() {
+    try {
+      const envelope = await exportAllData();
+      const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${APP_NAME.toLowerCase()}-chats-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setDataStatus(`Exported ${envelope.conversations.length} conversation(s).`);
+    } catch (err) {
+      setDataStatus(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  async function importChats(file: File) {
+    try {
+      const result = await importData(JSON.parse(await file.text()));
+      setDataStatus(
+        `Imported ${result.imported} conversation(s)` +
+          (result.skipped ? `, skipped ${result.skipped} already present.` : '.'),
+      );
+    } catch (err) {
+      setDataStatus(`Import failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   async function save() {
     await setSettings({ ...props.settings, apiKey: apiKey.trim(), model });
@@ -100,6 +131,43 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
       {test.state === 'error' && (
         <p className="text-xs break-words text-red-400">{test.message}</p>
       )}
+
+      <div className="space-y-1.5">
+        <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
+          Chat history (stays on this device)
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={exportChats}
+            className="rounded-md border border-zinc-700 px-4 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-900"
+          >
+            Export JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="rounded-md border border-zinc-700 px-4 py-2 text-xs text-zinc-300 transition-colors hover:bg-zinc-900"
+          >
+            Import JSON
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importChats(file);
+              e.target.value = '';
+            }}
+          />
+        </div>
+        {dataStatus && <p className="text-xs text-zinc-400">{dataStatus}</p>}
+        <p className="text-[0.65rem] text-zinc-600">
+          Exports contain conversations only — never your API key.
+        </p>
+      </div>
 
       {props.settings.autoApproveOrigins.length > 0 && (
         <Field label="Trusted sites (actions run without approval)">

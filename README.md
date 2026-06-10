@@ -22,7 +22,9 @@ server — your API key and chat history never leave your device.
   sidebar; per-site "always allow" is managed in Settings. This gate is the
   core defense against prompt injection from page content.
 - **Minimal agent loop** — streaming, tool calls, 10-step cap, Stop button
-- **Local history** — conversations stored in IndexedDB (Dexie)
+- **Local history** — conversations stored in IndexedDB (Dexie), with
+  versioned **JSON export/import** in Settings (never includes the API key)
+- **Alt+S** toggles the sidebar
 
 ## Architecture
 
@@ -63,5 +65,4 @@ requested on first use.
 ## Roadmap
 
 - OpenAI + Gemini adapters behind the existing provider interface
-- JSON export/import of chat history
 - Optional host permissions (replace `<all_urls>`) before store submission
