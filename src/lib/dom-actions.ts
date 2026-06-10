@@ -111,6 +111,71 @@ function setNativeValue(el: HTMLInputElement | HTMLTextAreaElement, value: strin
   else el.value = value;
 }
 
+const OUTER_HTML_MAX = 4000;
+
+function trimmedOuterHtml(el: Element): string {
+  const clone = el.cloneNode(true) as Element;
+  clone.querySelectorAll('script, style, svg path').forEach((child) => child.remove());
+  const html = clone.outerHTML.replace(/\s+/g, ' ').replace(/> </g, '>\n<');
+  return html.length > OUTER_HTML_MAX
+    ? html.slice(0, OUTER_HTML_MAX) + '\n… [truncated]'
+    : html;
+}
+
+const STYLE_KEYS = [
+  'display',
+  'position',
+  'width',
+  'height',
+  'margin',
+  'padding',
+  'border',
+  'font-size',
+  'font-family',
+  'font-weight',
+  'color',
+  'background-color',
+  'z-index',
+  'overflow',
+  'opacity',
+  'visibility',
+  'flex-direction',
+  'grid-template-columns',
+] as const;
+
+export function inspectElement(options: { index?: number; selector?: string }): {
+  report: string;
+} {
+  let el: Element;
+  let matchNote = '';
+
+  if (options.selector != null) {
+    const matches = document.querySelectorAll(options.selector);
+    if (matches.length === 0) {
+      throw new Error(`No element matches selector "${options.selector}".`);
+    }
+    el = matches[0];
+    if (matches.length > 1) matchNote = `\n(${matches.length} elements match — showing the first)`;
+  } else if (options.index != null) {
+    el = getSnapshotElement(options.index);
+  } else {
+    throw new Error('inspect_element requires either "index" or "selector".');
+  }
+
+  const computed = getComputedStyle(el);
+  const styles = STYLE_KEYS.map((key) => `  ${key}: ${computed.getPropertyValue(key)}`).join('\n');
+  const rect = el.getBoundingClientRect();
+  const box = `x=${Math.round(rect.x)} y=${Math.round(rect.y)} w=${Math.round(rect.width)} h=${Math.round(rect.height)}`;
+
+  return {
+    report:
+      `Element: <${el.tagName.toLowerCase()}>${matchNote}\n` +
+      `Bounding box: ${box}\n\n` +
+      `Computed styles:\n${styles}\n\n` +
+      `HTML:\n${trimmedOuterHtml(el)}`,
+  };
+}
+
 export function fillForm(index: number, value: string): { result: string } {
   const el = getSnapshotElement(index);
   (el as HTMLElement).scrollIntoView({ block: 'center' });

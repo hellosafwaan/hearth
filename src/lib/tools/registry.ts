@@ -9,6 +9,12 @@ import {
   executeReadPage,
   executeScroll,
 } from './executors/page';
+import {
+  executeInspectElement,
+  executeReadConsole,
+  executeReadNetwork,
+  executeReloadAndCapture,
+} from './executors/devtools';
 import { executeScreenshot } from './executors/screenshot';
 import { executeListTabs, executeWait } from './executors/utility';
 import { withRetry } from './retry';
@@ -37,6 +43,10 @@ const executors: Record<string, ToolExecutor> = {
   scroll: executeScroll,
   wait: executeWait,
   list_tabs: executeListTabs,
+  read_console: executeReadConsole,
+  read_network: executeReadNetwork,
+  inspect_element: executeInspectElement,
+  reload_and_capture: executeReloadAndCapture,
 };
 
 // Every tool gets one automatic retry on transient failures (content script

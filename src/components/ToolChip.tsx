@@ -13,6 +13,10 @@ const TOOL_LABELS: Record<string, string> = {
   scroll: '↕️ Scroll',
   wait: '⏳ Wait',
   list_tabs: '🗃️ Tabs',
+  read_console: '🖥️ Console',
+  read_network: '🌐 Network',
+  inspect_element: '🔬 Inspect',
+  reload_and_capture: '🔄 Reload + capture',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

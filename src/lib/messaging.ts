@@ -1,4 +1,5 @@
 import { browser } from '#imports';
+import type { ConsoleEntry, ConsoleLevel, NetworkEntry } from './devtools/protocol';
 
 // Typed protocol between the sidepanel (tool executors) and the content script.
 
@@ -11,7 +12,10 @@ export type ContentRequest =
   | { type: 'get_page_tech' }
   | { type: 'get_page_metadata' }
   | { type: 'find_in_page'; query: string }
-  | { type: 'scroll'; direction: 'up' | 'down' | 'top' | 'bottom' };
+  | { type: 'scroll'; direction: 'up' | 'down' | 'top' | 'bottom' }
+  | { type: 'inspect_element'; index?: number; selector?: string }
+  | { type: 'read_console'; level?: ConsoleLevel | 'all'; limit?: number }
+  | { type: 'read_network'; statusMin?: number; urlContains?: string; limit?: number };
 
 export interface PageContent {
   title: string;
@@ -32,6 +36,13 @@ export type ContentResponseData = {
   get_page_metadata: { report: string; url: string };
   find_in_page: { result: string };
   scroll: { result: string };
+  inspect_element: { report: string };
+  read_console:
+    | { armed: false }
+    | { armed: true; startedAt: number; pageTimeOrigin: number; entries: ConsoleEntry[] };
+  read_network:
+    | { armed: false }
+    | { armed: true; startedAt: number; pageTimeOrigin: number; entries: NetworkEntry[] };
 };
 
 export type ContentResponse<T extends ContentRequest['type'] = ContentRequest['type']> =
