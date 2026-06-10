@@ -1,11 +1,22 @@
 import { browser, defineBackground } from '#imports';
 import { APP_NAME } from '../lib/constants';
+import { handleDebuggerMessage, registerDebuggerLifecycle } from '../lib/devtools/debugger';
+import { isDebuggerMessage } from '../lib/devtools/protocol';
 import { setPendingSelection } from '../lib/selection';
 
 const ASK_SELECTION_MENU_ID = 'ask-about-selection';
 
 export default defineBackground(() => {
   const api = browser as any;
+
+  // Deep inspection (Tier 2): the background owns chrome.debugger sessions;
+  // the sidepanel talks to them via runtime messages. No-op on Firefox.
+  registerDebuggerLifecycle();
+  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (!isDebuggerMessage(message)) return;
+    handleDebuggerMessage(message).then(sendResponse);
+    return true;
+  });
 
   // Chrome: clicking the toolbar icon opens the side panel.
   api.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true }).catch(() => {});

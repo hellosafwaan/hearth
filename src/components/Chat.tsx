@@ -6,7 +6,12 @@ import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
 import { createProvider, supportsTools, supportsVision } from '../lib/providers';
 import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
 import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
-import { ACTING_TOOLS, SEQUENTIAL_TOOLS, toolDefinitions } from '../lib/tools/definitions';
+import {
+  ACTING_TOOLS,
+  DEBUGGER_TOOLS,
+  SEQUENTIAL_TOOLS,
+  toolDefinitions,
+} from '../lib/tools/definitions';
 import { toolRegistry } from '../lib/tools/registry';
 import { shrinkImagesForStorage } from '../lib/image';
 import { ApprovalCard, type ApprovalDecision, type PendingApproval } from './ApprovalCard';
@@ -101,11 +106,13 @@ export function Chat(props: {
       history.push(userMessage);
 
       const provider = createProvider(settings);
-      const tools = !supportsTools(settings)
-        ? []
-        : supportsVision(settings)
-          ? toolDefinitions
-          : toolDefinitions.filter((t) => t.name !== 'screenshot');
+      // Deep inspection rides on chrome.debugger — not offered on Firefox.
+      const available = toolDefinitions.filter(
+        (t) =>
+          (!import.meta.env.FIREFOX || !DEBUGGER_TOOLS.has(t.name)) &&
+          (supportsVision(settings) || t.name !== 'screenshot'),
+      );
+      const tools = supportsTools(settings) ? available : [];
 
       await runAgent({
         provider,

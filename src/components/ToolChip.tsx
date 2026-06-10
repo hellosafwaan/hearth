@@ -17,6 +17,8 @@ const TOOL_LABELS: Record<string, string> = {
   read_network: '🌐 Network',
   inspect_element: '🔬 Inspect',
   reload_and_capture: '🔄 Reload + capture',
+  enable_deep_inspection: '🛠️ Deep inspection',
+  get_response_body: '📦 Response body',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

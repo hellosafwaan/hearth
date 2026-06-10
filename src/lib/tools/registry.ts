@@ -10,6 +10,8 @@ import {
   executeScroll,
 } from './executors/page';
 import {
+  executeEnableDeepInspection,
+  executeGetResponseBody,
   executeInspectElement,
   executeReadConsole,
   executeReadNetwork,
@@ -47,6 +49,8 @@ const executors: Record<string, ToolExecutor> = {
   read_network: executeReadNetwork,
   inspect_element: executeInspectElement,
   reload_and_capture: executeReloadAndCapture,
+  enable_deep_inspection: executeEnableDeepInspection,
+  get_response_body: executeGetResponseBody,
 };
 
 // Every tool gets one automatic retry on transient failures (content script

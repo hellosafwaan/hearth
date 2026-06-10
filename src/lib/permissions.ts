@@ -51,6 +51,20 @@ export async function requestServerAccess(baseUrl: string): Promise<boolean> {
   return browser.permissions.request({ origins });
 }
 
+/** Deep inspection (chrome.debugger) — Chrome only, explicit opt-in. */
+export function hasDebuggerPermission(): Promise<boolean> {
+  return browser.permissions.contains({ permissions: ['debugger'] }).catch(() => false);
+}
+
+/** Must be called from a user gesture (button click). Chrome only. */
+export function requestDebuggerPermission(): Promise<boolean> {
+  return browser.permissions.request({ permissions: ['debugger'] }).catch(() => false);
+}
+
+export function revokeDebuggerPermission(): Promise<boolean> {
+  return browser.permissions.remove({ permissions: ['debugger'] }).catch(() => false);
+}
+
 export function watchPermissions(callback: () => void): () => void {
   const api = browser.permissions as any;
   api.onAdded?.addListener(callback);

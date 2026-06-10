@@ -17,7 +17,12 @@ export default defineConfig({
     // manifest keys for optional origins.
     ...(browser === 'firefox'
       ? { optional_permissions: ['<all_urls>'] }
-      : { optional_host_permissions: ['<all_urls>'] }),
+      : {
+          optional_host_permissions: ['<all_urls>'],
+          // Deep inspection (full network bodies + console via CDP) is an
+          // explicit opt-in; Firefox has no debugger API for extensions.
+          optional_permissions: ['debugger'],
+        }),
     action: {
       default_title: 'Sidekick',
     },

@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { APP_NAME, GEMINI_MODELS, MODELS } from '../lib/constants';
 import { exportAllData, importData } from '../lib/db/export';
 import {
+  hasDebuggerPermission,
   hasPageAccess,
+  requestDebuggerPermission,
   requestPageAccess,
   requestServerAccess,
+  revokeDebuggerPermission,
   revokePageAccess,
   watchPermissions,
 } from '../lib/permissions';
@@ -32,13 +35,17 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [localModels, setLocalModels] = useState<string[] | null>(null);
   const [dataStatus, setDataStatus] = useState<string | null>(null);
   const [pageAccess, setPageAccess] = useState<boolean | null>(null);
+  const [debuggerAccess, setDebuggerAccess] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocal = draft.provider === 'openai-compatible';
   const isGemini = draft.provider === 'gemini';
 
   useEffect(() => {
-    const refresh = () => hasPageAccess().then(setPageAccess);
+    const refresh = () => {
+      hasPageAccess().then(setPageAccess);
+      if (!import.meta.env.FIREFOX) hasDebuggerPermission().then(setDebuggerAccess);
+    };
     refresh();
     return watchPermissions(refresh);
   }, []);
@@ -357,6 +364,42 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
           )}
         </div>
       </div>
+
+      {!import.meta.env.FIREFOX && (
+        <div className="space-y-1.5">
+          <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">
+            Deep inspection (debugger)
+          </span>
+          <div className="flex items-center justify-between rounded border border-zinc-800 bg-zinc-900 px-2.5 py-1.5">
+            <span className="text-xs text-zinc-300">
+              {debuggerAccess
+                ? 'Granted — full network/console tools available'
+                : 'Not granted — lightweight capture only'}
+            </span>
+            {debuggerAccess ? (
+              <button
+                type="button"
+                onClick={() => revokeDebuggerPermission()}
+                className="text-[0.7rem] text-zinc-500 hover:text-red-400"
+              >
+                Revoke
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => requestDebuggerPermission()}
+                className="rounded border border-sky-800 px-2 py-1 text-[0.7rem] text-sky-300 hover:bg-sky-950/50"
+              >
+                Grant
+              </button>
+            )}
+          </div>
+          <p className="text-[0.65rem] text-zinc-600">
+            Lets the assistant read response bodies and the full console via a per-tab debugger
+            session you approve each time. Chrome shows a banner while one is active.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <span className="font-mono text-[0.65rem] tracking-wider text-zinc-500 uppercase">

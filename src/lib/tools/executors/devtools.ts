@@ -1,7 +1,32 @@
 import { browser } from '#imports';
-import type { ConsoleEntry, ConsoleLevel, NetworkEntry } from '../../devtools/protocol';
+import { hasDebuggerPermission } from '../../permissions';
+import type {
+  ConsoleEntry,
+  ConsoleLevel,
+  DebuggerMessage,
+  DebuggerNetworkEntry,
+  DebuggerResponse,
+  NetworkEntry,
+} from '../../devtools/protocol';
 import { sendToActiveTab } from '../../messaging';
 import type { ToolExecResult } from '../registry';
+
+/** Sends a Tier 2 message to the background-owned debugger session. */
+async function sendToDebugger<T extends DebuggerMessage>(
+  message: T,
+): Promise<DebuggerResponse<T['type']>> {
+  try {
+    return await browser.runtime.sendMessage(message);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** True when a deep-inspection session is active on the given tab. */
+async function deepInspectionActive(tabId: number): Promise<boolean> {
+  const response = await sendToDebugger({ type: 'debugger:status', tabId });
+  return response.ok && response.data.active;
+}
 
 function errorResult(error: string): ToolExecResult {
   return { content: [{ type: 'text', text: error }], isError: true };
@@ -83,6 +108,22 @@ export async function executeReadConsole(input: Record<string, unknown>): Promis
   }
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
 
+  // Deep inspection active? Use the CDP session — complete coverage.
+  const tabId = await getActiveTabId();
+  if (await deepInspectionActive(tabId)) {
+    const response = await sendToDebugger({
+      type: 'debugger:read_console',
+      tabId,
+      level: level as ConsoleLevel | 'all',
+      limit,
+    });
+    if (!response.ok) return errorResult(response.error);
+    return textResult(
+      `Deep inspection (full console since ${new Date(response.data.attachedAt).toTimeString().slice(0, 8)}):\n\n` +
+        formatConsole(response.data.entries),
+    );
+  }
+
   const request = { type: 'read_console' as const, level: level as ConsoleLevel | 'all', limit };
   let response = await sendToActiveTab(request);
   if (!response.ok) return errorResult(response.error);
@@ -107,10 +148,41 @@ export async function executeReadConsole(input: Record<string, unknown>): Promis
   return textResult(`${coverageNote(startedAt, pageTimeOrigin)}\n\n${formatConsole(entries)}`);
 }
 
+function formatDebuggerNetwork(entries: DebuggerNetworkEntry[]): string {
+  if (entries.length === 0) return 'No network requests captured (matching the filter).';
+  return entries
+    .map((e) => {
+      const status = e.status != null ? String(e.status) : e.error ? `ERR ${e.error}` : 'pending';
+      const size = e.sizeBytes != null ? ` ${(e.sizeBytes / 1024).toFixed(1)}kB` : '';
+      const mime = e.mimeType ? ` ${e.mimeType}` : '';
+      return `${formatTime(e.ts)} ${e.method} ${status} ${e.url}${mime}${size} [id:${e.requestId}]`;
+    })
+    .join('\n');
+}
+
 export async function executeReadNetwork(input: Record<string, unknown>): Promise<ToolExecResult> {
   const statusMin = typeof input.status_min === 'number' ? input.status_min : undefined;
   const urlContains = typeof input.url_contains === 'string' ? input.url_contains : undefined;
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
+
+  // Deep inspection active? CDP sees everything, with requestIds for bodies.
+  const tabId = await getActiveTabId();
+  if (await deepInspectionActive(tabId)) {
+    const response = await sendToDebugger({
+      type: 'debugger:read_network',
+      tabId,
+      statusMin,
+      urlContains,
+      limit,
+    });
+    if (!response.ok) return errorResult(response.error);
+    return textResult(
+      'Deep inspection (full network since ' +
+        `${new Date(response.data.attachedAt).toTimeString().slice(0, 8)}; ` +
+        'use get_response_body with an [id:…] to read a response):\n\n' +
+        formatDebuggerNetwork(response.data.entries),
+    );
+  }
 
   const request = { type: 'read_network' as const, statusMin, urlContains, limit };
   let response = await sendToActiveTab(request);
@@ -182,5 +254,49 @@ export async function executeReloadAndCapture(): Promise<ToolExecResult> {
   return textResult(
     'Reloaded the page with capture armed from document_start. read_console and read_network ' +
       'now have full coverage for this page, including load-time activity.',
+  );
+}
+
+// --- Tier 2: deep inspection (chrome.debugger, Chrome only) ---
+
+export async function executeEnableDeepInspection(): Promise<ToolExecResult> {
+  if (!(await hasDebuggerPermission())) {
+    return errorResult(
+      'Deep inspection needs the debugger permission, which must be granted from Settings — ' +
+        'ask the user to open Settings and click "Enable deep inspection". ' +
+        '(Chrome only; Firefox does not support this.)',
+    );
+  }
+  const tabId = await getActiveTabId();
+  const response = await sendToDebugger({ type: 'debugger:enable', tabId });
+  if (!response.ok) return errorResult(response.error);
+  return textResult(
+    'Deep inspection is active on this tab. Chrome shows an "is debugging this browser" banner ' +
+      'while it runs. read_console and read_network now return complete data, and ' +
+      'get_response_body can read response bodies. It detaches when the tab closes.',
+  );
+}
+
+export async function executeGetResponseBody(input: Record<string, unknown>): Promise<ToolExecResult> {
+  const requestId = typeof input.request_id === 'string' ? input.request_id.trim() : '';
+  if (!requestId) {
+    return errorResult(
+      'get_response_body requires "request_id" — the [id:…] value from a read_network result ' +
+        'taken while deep inspection is active.',
+    );
+  }
+  const tabId = await getActiveTabId();
+  const response = await sendToDebugger({ type: 'debugger:get_body', tabId, requestId });
+  if (!response.ok) return errorResult(response.error);
+
+  const { body, base64Encoded, truncated } = response.data;
+  if (base64Encoded) {
+    return textResult(
+      `Response body is binary (${Math.round(body.length * 0.75)} bytes) — not shown. ` +
+        'Only text responses (JSON, HTML, XML…) can be read.',
+    );
+  }
+  return textResult(
+    `<response_body${truncated ? ' truncated="true"' : ''}>\n${body}\n</response_body>`,
   );
 }

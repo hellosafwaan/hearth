@@ -59,3 +59,47 @@ export interface DevtoolsBridgeResponse {
     | { kind: 'network'; startedAt: number; pageTimeOrigin: number; entries: NetworkEntry[] }
     | { kind: 'status'; status: CaptureStatus };
 }
+
+// --- Tier 2: sidepanel ↔ background protocol for chrome.debugger sessions ---
+
+/** Network entry from CDP — has a requestId usable with get_response_body. */
+export interface DebuggerNetworkEntry extends NetworkEntry {
+  requestId: string;
+  mimeType?: string;
+}
+
+export type DebuggerMessage =
+  | { type: 'debugger:enable'; tabId: number }
+  | { type: 'debugger:disable'; tabId: number }
+  | { type: 'debugger:status'; tabId: number }
+  | { type: 'debugger:read_console'; tabId: number; level?: ConsoleLevel | 'all'; limit?: number }
+  | {
+      type: 'debugger:read_network';
+      tabId: number;
+      statusMin?: number;
+      urlContains?: string;
+      limit?: number;
+    }
+  | { type: 'debugger:get_body'; tabId: number; requestId: string };
+
+export type DebuggerResponseData = {
+  'debugger:enable': { attached: true };
+  'debugger:disable': { detached: true };
+  'debugger:status': { active: boolean; attachedAt?: number };
+  'debugger:read_console': { attachedAt: number; entries: ConsoleEntry[] };
+  'debugger:read_network': { attachedAt: number; entries: DebuggerNetworkEntry[] };
+  'debugger:get_body': { body: string; base64Encoded: boolean; truncated: boolean };
+};
+
+export type DebuggerResponse<T extends DebuggerMessage['type'] = DebuggerMessage['type']> =
+  | { ok: true; data: DebuggerResponseData[T] }
+  | { ok: false; error: string };
+
+export function isDebuggerMessage(message: unknown): message is DebuggerMessage {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    typeof (message as { type?: unknown }).type === 'string' &&
+    (message as { type: string }).type.startsWith('debugger:')
+  );
+}
