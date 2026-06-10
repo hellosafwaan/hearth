@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { browser } from '#imports';
 import { runAgent } from '../lib/agent/loop';
 import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
-import { createAnthropicProvider } from '../lib/providers/anthropic';
+import { createProvider, supportsTools, supportsVision } from '../lib/providers';
 import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
 import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
 import { ACTING_TOOLS, toolDefinitions } from '../lib/tools/definitions';
@@ -97,13 +97,18 @@ export function Chat(props: {
       await appendMessage(convId, userMessage);
       history.push(userMessage);
 
-      const provider = createAnthropicProvider(settings.apiKey);
+      const provider = createProvider(settings);
+      const tools = !supportsTools(settings)
+        ? []
+        : supportsVision(settings)
+          ? toolDefinitions
+          : toolDefinitions.filter((t) => t.name !== 'screenshot');
 
       await runAgent({
         provider,
         model: settings.model,
         history,
-        tools: toolDefinitions,
+        tools,
         registry: toolRegistry,
         actingTools: ACTING_TOOLS,
         signal: controller.signal,
@@ -143,7 +148,10 @@ export function Chat(props: {
   return (
     <div className="flex h-full flex-col">
       {isEmpty ? (
-        <EmptyState onSummarize={() => send('Summarize the current page.')} />
+        <EmptyState
+          canUseTools={supportsTools(settings)}
+          onSummarize={() => send('Summarize the current page.')}
+        />
       ) : (
         <MessageList messages={messages} running={running} live={live} />
       )}
@@ -158,7 +166,7 @@ export function Chat(props: {
   );
 }
 
-function EmptyState(props: { onSummarize: () => void }) {
+function EmptyState(props: { canUseTools: boolean; onSummarize: () => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
       <p className="text-xs text-zinc-500">
@@ -166,13 +174,19 @@ function EmptyState(props: { onSummarize: () => void }) {
         <br />
         Your key, your browser, your data.
       </p>
-      <button
-        type="button"
-        onClick={props.onSummarize}
-        className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-emerald-600 hover:text-emerald-400"
-      >
-        📸 Summarize this page
-      </button>
+      {props.canUseTools ? (
+        <button
+          type="button"
+          onClick={props.onSummarize}
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-emerald-600 hover:text-emerald-400"
+        >
+          📄 Summarize this page
+        </button>
+      ) : (
+        <p className="text-[0.65rem] text-zinc-600">
+          Page tools are off for this model (enable "tool calling" in Settings if it supports them).
+        </p>
+      )}
     </div>
   );
 }

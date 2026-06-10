@@ -3,6 +3,7 @@ import { Chat, type ComposerDraft } from '../../components/Chat';
 import { ConversationList } from '../../components/ConversationList';
 import { SettingsPanel } from '../../components/SettingsPanel';
 import { APP_NAME } from '../../lib/constants';
+import { requiresApiKey } from '../../lib/providers';
 import {
   formatSelectionDraft,
   takePendingSelection,
@@ -43,7 +44,7 @@ export default function App() {
 
   if (!settings) return null;
 
-  const needsKey = !settings.apiKey;
+  const needsKey = requiresApiKey(settings) && !settings.apiKey;
   const activeView: View = needsKey ? 'settings' : view;
 
   return (

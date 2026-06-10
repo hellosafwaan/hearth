@@ -1,10 +1,18 @@
 import { storage } from '#imports';
 import { DEFAULT_MODEL } from '../constants';
 
+export type ProviderKind = 'anthropic' | 'openai-compatible';
+
 export interface Settings {
-  provider: 'anthropic';
+  provider: ProviderKind;
   apiKey: string;
   model: string;
+  /** Base URL for OpenAI-compatible servers (LM Studio, Ollama, …). */
+  baseUrl: string;
+  /** Whether the local/compatible model handles tool calling. */
+  supportsTools: boolean;
+  /** Whether the local/compatible model accepts images (screenshots). */
+  supportsVision: boolean;
   /** Origins where acting tools run without per-action approval. */
   autoApproveOrigins: string[];
 }
@@ -13,6 +21,9 @@ export const DEFAULT_SETTINGS: Settings = {
   provider: 'anthropic',
   apiKey: '',
   model: DEFAULT_MODEL,
+  baseUrl: 'http://localhost:1234/v1',
+  supportsTools: true,
+  supportsVision: false,
   autoApproveOrigins: [],
 };
 

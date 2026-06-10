@@ -9,8 +9,12 @@ server — your API key and chat history never leave your device.
 
 ## Features
 
-- **Bring your own key** — Anthropic API, key stored in `storage.local` only
-  (never `storage.sync`, which would replicate it through vendor servers)
+- **Bring your own key — or no key at all** — Anthropic API with your key, or
+  any **OpenAI-compatible server**: LM Studio / Ollama / llama.cpp locally
+  (completely free, inference never leaves your machine) and hosted services
+  (OpenAI, OpenRouter, Groq) via base URL + key. Keys live in `storage.local`
+  only (never `storage.sync`, which would replicate them through vendor
+  servers).
 - **Persistent sidebar** — Chrome side panel / Firefox sidebar
 - **Page tools** — `read_page` (Mozilla Readability extraction),
   `get_selected_text`, and `screenshot`; the model picks the right one
@@ -31,9 +35,11 @@ server — your API key and chat history never leave your device.
 - The agent loop runs **inside the sidepanel page**, not the MV3 service
   worker — the panel lives exactly as long as a conversation, so there are no
   worker-lifetime hacks.
-- `src/lib/providers/` defines a provider-agnostic message/tool format; the
-  Anthropic adapter (official SDK) is the only implementation in v1. OpenAI and
-  Gemini adapters slot in behind the same interface.
+- `src/lib/providers/` defines a provider-agnostic message/tool format with two
+  adapters: Anthropic (official SDK) and OpenAI-compatible (covers local
+  runtimes and most hosted services). Per-model capability toggles in Settings
+  (tool calling / vision) gracefully disable tools a small local model can't
+  handle. A Gemini adapter slots in behind the same interface.
 - `src/lib/tools/` separates tool *definitions* (schemas the model sees) from
   *executors*. DOM tools (`read_page`, `get_selected_text`) run in the content
   script via a typed message bridge (`src/lib/messaging.ts`) with an
@@ -62,7 +68,18 @@ v1 uses `<all_urls>` host permission so the screenshot tool works without a
 per-capture user gesture. TODO(v2): switch to optional host permissions
 requested on first use.
 
+## Local models
+
+Settings → Provider → "Local / OpenAI-compatible (free)".
+
+- **LM Studio**: `lms server start` (or Developer tab → Start Server), pick the
+  preset, hit Fetch to list your downloaded models.
+- **Ollama**: must allow extension origins — start it with
+  `OLLAMA_ORIGINS="chrome-extension://*"` (or `"*"`), then use the Ollama preset.
+- Untick "tool calling" / "vision" for models that can't do them — page tools
+  disable gracefully instead of erroring.
+
 ## Roadmap
 
-- OpenAI + Gemini adapters behind the existing provider interface
+- Gemini adapter behind the existing provider interface
 - Optional host permissions (replace `<all_urls>`) before store submission
