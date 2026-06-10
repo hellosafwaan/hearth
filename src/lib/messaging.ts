@@ -4,7 +4,7 @@ import type { ConsoleEntry, ConsoleLevel, NetworkEntry } from './devtools/protoc
 // Typed protocol between the sidepanel (tool executors) and the content script.
 
 export type ContentRequest =
-  | { type: 'read_page' }
+  | { type: 'read_page'; mode?: 'article' | 'full'; offset?: number }
   | { type: 'get_selected_text' }
   | { type: 'get_interactive_elements' }
   | { type: 'click_element'; index: number }
@@ -21,9 +21,19 @@ export interface PageContent {
   title: string;
   url: string;
   byline?: string;
-  /** Extracted readable text, capped at READ_PAGE_MAX_CHARS. */
+  /** Extracted text (window of it in full mode). */
   text: string;
   truncated: boolean;
+  mode: 'article' | 'full';
+  /** Total chars of the page's cleaned innerText. */
+  totalChars: number;
+  /** Start of this window within the full text (full mode; 0 in article mode). */
+  offset: number;
+  /**
+   * Article mode only: the page holds much more text than the extracted
+   * article — comments, threads, app UI. Signals the model to retry full mode.
+   */
+  pageHasMoreText: boolean;
 }
 
 export type ContentResponseData = {

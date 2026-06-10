@@ -31,13 +31,25 @@ export const toolDefinitions: ToolDefinition[] = [
   {
     name: 'read_page',
     description:
-      "Extract the readable text content of the user's current browser tab (title, URL, article text). " +
-      'Call this when the user asks about the page they are on — summarizing, explaining, or answering ' +
-      'questions about its content. Prefer this over screenshot for text-heavy pages: it is more accurate ' +
-      'for prose and much cheaper.',
+      "Extract the text content of the user's current browser tab. Default mode \"article\" extracts " +
+      'the main article (best for posts, news, docs) but strips comments, threads, and app UI. ' +
+      'Mode "full" returns the entire visible page text in windows — use it when article mode is ' +
+      'missing content you need (comments, replies, feeds, web apps) or when the result says the page ' +
+      'has more text. Prefer this over screenshot for anything text-heavy.',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        mode: {
+          type: 'string',
+          enum: ['article', 'full'],
+          description: 'article (default): main article via Readability. full: entire page text.',
+        },
+        offset: {
+          type: 'integer',
+          description:
+            'Full mode only: character offset to continue reading from (use the value suggested by the previous result).',
+        },
+      },
     },
   },
   {

@@ -1,6 +1,6 @@
 import { Readability } from '@mozilla/readability';
 import { browser, defineContentScript } from '#imports';
-import { READ_PAGE_MAX_CHARS } from '../lib/constants';
+import { READ_PAGE_FULL_MAX_CHARS, READ_PAGE_MAX_CHARS } from '../lib/constants';
 import {
   DEVTOOLS_REQ_EVENT,
   DEVTOOLS_RES_EVENT,
@@ -11,15 +11,35 @@ import { clickElement, fillForm, getInteractiveElements, inspectElement } from '
 import { findInPage, getPageMetadata, getPageTech, scrollPage } from '../lib/page-intel';
 import type { ContentRequest, ContentResponse, PageContent } from '../lib/messaging';
 
-function cap(text: string): { text: string; truncated: boolean } {
-  const cleaned = text.replace(/\n{3,}/g, '\n\n').trim();
-  if (cleaned.length <= READ_PAGE_MAX_CHARS) {
-    return { text: cleaned, truncated: false };
-  }
-  return { text: cleaned.slice(0, READ_PAGE_MAX_CHARS), truncated: true };
+function clean(text: string): string {
+  return text.replace(/\n{3,}/g, '\n\n').trim();
 }
 
-function readPage(): PageContent {
+/**
+ * Two extraction modes:
+ * - "article" (default): Mozilla Readability — best for prose, but it strips
+ *   comments, threads, and app UI by design.
+ * - "full": the page's entire innerText, windowed by `offset` so the model
+ *   can page through huge pages (YouTube comments, Reddit threads…).
+ */
+function readPage(mode: 'article' | 'full' = 'article', offset = 0): PageContent {
+  const fullText = clean(document.body?.innerText ?? '');
+
+  if (mode === 'full') {
+    const start = Math.min(Math.max(0, Math.floor(offset)), fullText.length);
+    const text = fullText.slice(start, start + READ_PAGE_FULL_MAX_CHARS);
+    return {
+      title: document.title,
+      url: location.href,
+      text,
+      truncated: start + text.length < fullText.length,
+      mode,
+      totalChars: fullText.length,
+      offset: start,
+      pageHasMoreText: false,
+    };
+  }
+
   // Readability mutates its input, so parse a clone.
   let article: ReturnType<Readability['parse']> = null;
   try {
@@ -28,18 +48,22 @@ function readPage(): PageContent {
     // Fall through to innerText.
   }
 
-  const raw =
-    article?.textContent && article.textContent.trim().length > 200
-      ? article.textContent
-      : document.body?.innerText ?? '';
+  const usedArticle = !!article?.textContent && article.textContent.trim().length > 200;
+  const cleaned = clean(usedArticle ? article!.textContent! : fullText);
+  const text = cleaned.slice(0, READ_PAGE_MAX_CHARS);
 
-  const { text, truncated } = cap(raw);
   return {
     title: article?.title || document.title,
     url: location.href,
     byline: article?.byline ?? undefined,
     text,
-    truncated,
+    truncated: cleaned.length > READ_PAGE_MAX_CHARS,
+    mode,
+    totalChars: fullText.length,
+    offset: 0,
+    // The article is a small slice of a big page — comments/threads/app UI
+    // probably got stripped; the model should retry with mode: "full".
+    pageHasMoreText: usedArticle && fullText.length > 5000 && cleaned.length < fullText.length * 0.2,
   };
 }
 
@@ -107,7 +131,7 @@ async function handleAsync(request: ContentRequest): Promise<ContentResponse> {
 function handle(request: ContentRequest): ContentResponse {
   switch (request.type) {
     case 'read_page':
-      return { ok: true, data: readPage() };
+      return { ok: true, data: readPage(request.mode, request.offset) };
     case 'get_selected_text':
       return {
         ok: true,

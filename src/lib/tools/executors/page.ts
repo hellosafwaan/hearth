@@ -5,25 +5,50 @@ function errorResult(error: string): ToolExecResult {
   return { content: [{ type: 'text', text: error }], isError: true };
 }
 
-export async function executeReadPage(): Promise<ToolExecResult> {
-  const response = await sendToActiveTab({ type: 'read_page' });
+export async function executeReadPage(input: Record<string, unknown>): Promise<ToolExecResult> {
+  const mode = input.mode === 'full' ? 'full' : 'article';
+  const offset = typeof input.offset === 'number' && input.offset > 0 ? input.offset : 0;
+
+  const response = await sendToActiveTab({ type: 'read_page', mode, offset });
   if (!response.ok) return errorResult(response.error);
 
-  const { title, url, byline, text, truncated } = response.data;
-  if (!text) {
-    return errorResult('The page has no readable text content. Try the screenshot tool instead.');
+  const data = response.data;
+  if (!data.text) {
+    return errorResult(
+      offset > 0
+        ? `Nothing at offset ${data.offset} — the page text is ${data.totalChars} characters long.`
+        : 'The page has no readable text content. Try the screenshot tool instead.',
+    );
   }
 
-  const header = [`Page: ${title}`, `URL: ${url}`, byline ? `By: ${byline}` : null]
+  const header = [`Page: ${data.title}`, `URL: ${data.url}`, data.byline ? `By: ${data.byline}` : null]
     .filter(Boolean)
     .join('\n');
-  const footer = truncated ? '\n\n[Content truncated — page is longer than the extraction limit.]' : '';
 
+  const notes: string[] = [];
+  if (data.mode === 'full') {
+    const end = data.offset + data.text.length;
+    notes.push(`[Full-page text, characters ${data.offset}–${end} of ${data.totalChars}.]`);
+    if (data.truncated) {
+      notes.push(`[More content remains — call read_page with mode "full" and offset ${end}.]`);
+    }
+  } else {
+    if (data.truncated) notes.push('[Article truncated — longer than the extraction limit.]');
+    if (data.pageHasMoreText) {
+      notes.push(
+        `[Note: this is the extracted article only. The page contains ~${Math.round(
+          data.totalChars / Math.max(data.text.length, 1),
+        )}x more text (likely comments, threads, or app UI) — call read_page with mode "full" to read it.]`,
+      );
+    }
+  }
+
+  const footer = notes.length > 0 ? `\n\n${notes.join('\n')}` : '';
   return {
     content: [
       {
         type: 'text',
-        text: `${header}\n\n<page_content>\n${text}\n</page_content>${footer}`,
+        text: `${header}\n\n<page_content>\n${data.text}\n</page_content>${footer}`,
       },
     ],
   };

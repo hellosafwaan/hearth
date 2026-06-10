@@ -10,6 +10,10 @@ export const SCREENSHOT_MAX_DIM = 1568;
 // ~8K tokens of page text — enough for almost any article without blowing up cost.
 export const READ_PAGE_MAX_CHARS = 30000;
 
+// Full-page mode window (~15K tokens). Bigger because it's used deliberately,
+// on pages where article extraction missed content; offset pages through it.
+export const READ_PAGE_FULL_MAX_CHARS = 60000;
+
 // Send-time pruning (lib/agent/prune.ts): what's kept at full fidelity in
 // provider requests. The DB always keeps everything.
 export const KEEP_RECENT_IMAGES = 2;
@@ -35,7 +39,7 @@ export const GEMINI_MODELS = [
 export const SYSTEM_PROMPT = `You are ${APP_NAME}, a privacy-first AI assistant that lives in the user's browser sidebar. You can access the user's current tab with your tools.
 
 Tool choice:
-- For questions about a page's text content (summaries, explanations, facts), call read_page.
+- For questions about a page's text content (summaries, explanations, facts), call read_page. Its default "article" mode extracts the main article only — if the content the user asked about is missing (comments, replies, feeds, app interfaces) or the result notes that the page has more text, call read_page again with mode "full". Use the offset parameter to continue through long pages. If content may not have loaded yet, scroll first, then read.
 - When the user refers to text they highlighted, call get_selected_text.
 - Use screenshot only when visual appearance matters (layout, charts, images, UI) or when read_page fails.
 - To act on a page (click, type, navigate): call get_interactive_elements first, then click_element / fill_form using the returned indices. After any action that changes the page, wait briefly, then re-scan before acting again.
