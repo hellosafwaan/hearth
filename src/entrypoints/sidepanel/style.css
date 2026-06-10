@@ -1,5 +1,142 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+ * Fonts — bundled locally (extension CSP + "nothing leaves your device").
+ * ------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-var.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------------------
+ * Design tokens — the single source of truth (design/stitch/DESIGN.md).
+ *
+ * Components never use raw palette utilities (zinc-*, emerald-*): they use
+ * the semantic tokens below. Dark is the default; light overrides the same
+ * variables under prefers-color-scheme.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  /* Surfaces: base page → raised cards/inputs → overlays (menus, sheets) */
+  --sk-surface: #09090b;
+  --sk-surface-raised: #18181b;
+  --sk-surface-overlay: #1f1f23;
+  --sk-surface-hover: #27272a;
+
+  /* Borders */
+  --sk-border: #27272a;
+  --sk-border-strong: #3f3f46;
+
+  /* Text */
+  --sk-text: #f4f4f5;
+  --sk-text-muted: #a1a1aa;
+  --sk-text-faint: #71717a;
+
+  /* Accent (emerald): primary actions, success, running states */
+  --sk-accent: #10b981;
+  --sk-accent-soft: rgba(16, 185, 129, 0.12);
+  --sk-accent-strong: #4edea3;
+  --sk-accent-fg: #022c1e;
+
+  /* Caution (amber): parameters, warnings */
+  --sk-caution: #f59e0b;
+  --sk-caution-soft: rgba(245, 158, 11, 0.12);
+
+  /* Danger (red): errors, destructive actions */
+  --sk-danger: #ef4444;
+  --sk-danger-strong: #ffb4ab;
+  --sk-danger-soft: rgba(239, 68, 68, 0.12);
+
+  --sk-shadow-overlay: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --sk-surface: #faf9f7;
+    --sk-surface-raised: #ffffff;
+    --sk-surface-overlay: #ffffff;
+    --sk-surface-hover: #f0efec;
+
+    --sk-border: #e7e5e0;
+    --sk-border-strong: #d6d3cd;
+
+    --sk-text: #1c1917;
+    --sk-text-muted: #57534e;
+    --sk-text-faint: #a8a29e;
+
+    --sk-accent: #059669;
+    --sk-accent-soft: rgba(5, 150, 105, 0.1);
+    --sk-accent-strong: #047857;
+    --sk-accent-fg: #ffffff;
+
+    --sk-caution: #d97706;
+    --sk-caution-soft: rgba(217, 119, 6, 0.12);
+
+    --sk-danger: #dc2626;
+    --sk-danger-strong: #b91c1c;
+    --sk-danger-soft: rgba(220, 38, 38, 0.08);
+
+    --sk-shadow-overlay: 0 10px 15px -3px rgba(28, 25, 23, 0.12);
+  }
+}
+
+@theme inline {
+  /* Colors → utilities like bg-surface, text-muted, border-border */
+  --color-surface: var(--sk-surface);
+  --color-surface-raised: var(--sk-surface-raised);
+  --color-surface-overlay: var(--sk-surface-overlay);
+  --color-surface-hover: var(--sk-surface-hover);
+  --color-border: var(--sk-border);
+  --color-border-strong: var(--sk-border-strong);
+  --color-text: var(--sk-text);
+  --color-muted: var(--sk-text-muted);
+  --color-faint: var(--sk-text-faint);
+  --color-accent: var(--sk-accent);
+  --color-accent-soft: var(--sk-accent-soft);
+  --color-accent-strong: var(--sk-accent-strong);
+  --color-accent-fg: var(--sk-accent-fg);
+  --color-caution: var(--sk-caution);
+  --color-caution-soft: var(--sk-caution-soft);
+  --color-danger: var(--sk-danger);
+  --color-danger-strong: var(--sk-danger-strong);
+  --color-danger-soft: var(--sk-danger-soft);
+
+  --shadow-overlay: var(--sk-shadow-overlay);
+}
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Type scale (DESIGN.md): label-sm 11, label-md 12, body-sm 13, body-md 14, headline 16 */
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 0.875rem;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1rem;
+  --text-body-sm: 0.8125rem;
+  --text-body-sm--line-height: 1.125rem;
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-headline: 1rem;
+  --text-headline--line-height: 1.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Base
+ * ------------------------------------------------------------------------- */
+
 html,
 body,
 #root {
@@ -7,11 +144,23 @@ body,
 }
 
 body {
-  @apply bg-zinc-950 text-zinc-200 text-sm antialiased;
+  @apply bg-surface text-text font-sans text-body-md antialiased;
 }
 
-/* Minimal markdown styling inside chat bubbles */
-.markdown :is(p, ul, ol, pre, blockquote) {
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Markdown inside chat
+ * ------------------------------------------------------------------------- */
+
+.markdown :is(p, ul, ol, pre, blockquote, table) {
   @apply my-2 first:mt-0 last:mb-0;
 }
 
@@ -28,33 +177,45 @@ body {
 }
 
 .markdown :is(h1, h2, h3, h4) {
-  @apply font-semibold mt-3 mb-1.5 text-zinc-100;
+  @apply text-text mt-3 mb-1.5 font-semibold;
 }
 
 .markdown h1 {
-  @apply text-base;
+  @apply text-headline;
 }
 
 .markdown h2 {
-  @apply text-[0.95rem];
+  @apply text-body-md;
 }
 
 .markdown code {
-  @apply font-mono text-[0.8rem] bg-zinc-900 border border-zinc-800 rounded px-1 py-px;
+  @apply font-mono text-label-md bg-surface-raised border-border rounded-sm border px-1 py-px;
 }
 
 .markdown pre {
-  @apply bg-zinc-900 border border-zinc-800 rounded-md p-2.5 overflow-x-auto;
+  @apply bg-surface-raised border-border overflow-x-auto rounded-md border p-2.5;
 }
 
 .markdown pre code {
-  @apply bg-transparent border-0 p-0;
+  @apply border-0 bg-transparent p-0;
 }
 
 .markdown a {
-  @apply text-emerald-400 underline underline-offset-2;
+  @apply text-accent-strong underline underline-offset-2;
 }
 
 .markdown blockquote {
-  @apply border-l-2 border-zinc-700 pl-3 text-zinc-400;
+  @apply border-border-strong text-muted border-l-2 pl-3;
+}
+
+.markdown table {
+  @apply block max-w-full overflow-x-auto text-body-sm;
+}
+
+.markdown :is(th, td) {
+  @apply border-border border px-2 py-1 text-left;
+}
+
+.markdown th {
+  @apply bg-surface-raised font-medium;
 }
