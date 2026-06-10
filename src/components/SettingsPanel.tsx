@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { APP_NAME, MODELS } from '../lib/constants';
+import { APP_NAME, GEMINI_MODELS, MODELS } from '../lib/constants';
 import { exportAllData, importData } from '../lib/db/export';
 import {
   hasPageAccess,
@@ -35,6 +35,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocal = draft.provider === 'openai-compatible';
+  const isGemini = draft.provider === 'gemini';
 
   useEffect(() => {
     const refresh = () => hasPageAccess().then(setPageAccess);
@@ -50,8 +51,12 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   function switchProvider(provider: ProviderKind) {
     update({
       provider,
-      // Sensible model default per provider; the user can change it.
-      model: provider === 'anthropic' ? props.settings.model || MODELS[1].id : draft.model,
+      model:
+        provider === 'anthropic'
+          ? props.settings.model || MODELS[1].id
+          : provider === 'gemini'
+            ? GEMINI_MODELS[1].id
+            : draft.model,
     });
     setLocalModels(null);
   }
@@ -119,7 +124,9 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
     }
   }
 
-  const canSave = isLocal ? draft.baseUrl.trim() && draft.model.trim() : !!draft.apiKey.trim();
+  const canSave = isLocal
+    ? !!(draft.baseUrl.trim() && draft.model.trim())
+    : !!draft.apiKey.trim();
 
   return (
     <div className="space-y-5 overflow-y-auto p-4">
@@ -136,7 +143,8 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
           onChange={(e) => switchProvider(e.target.value as ProviderKind)}
           className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
         >
-          <option value="anthropic">Anthropic API (your key)</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="gemini">Google (Gemini)</option>
           <option value="openai-compatible">Local / OpenAI-compatible (free)</option>
         </select>
       </Field>
@@ -242,7 +250,35 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
         </>
       )}
 
-      {!isLocal && (
+      {isGemini && (
+        <>
+          <Field label="Gemini API key">
+            <KeyInput
+              value={draft.apiKey}
+              show={showKey}
+              onToggleShow={() => setShowKey(!showKey)}
+              onChange={(apiKey) => update({ apiKey })}
+              placeholder="AIza…"
+            />
+          </Field>
+
+          <Field label="Model">
+            <select
+              value={draft.model}
+              onChange={(e) => update({ model: e.target.value })}
+              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 outline-none focus:border-zinc-600"
+            >
+              {GEMINI_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </>
+      )}
+
+      {!isLocal && !isGemini && (
         <>
           <Field label="Anthropic API key">
             <KeyInput

@@ -1,7 +1,7 @@
 import { storage } from '#imports';
 import { DEFAULT_MODEL } from '../constants';
 
-export type ProviderKind = 'anthropic' | 'openai-compatible';
+export type ProviderKind = 'anthropic' | 'gemini' | 'openai-compatible';
 
 export interface Settings {
   provider: ProviderKind;

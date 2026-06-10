@@ -17,6 +17,13 @@ export const MODELS = [
   { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
 ] as const;
 
+export const GEMINI_MODELS = [
+  { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+] as const;
+
 export const SYSTEM_PROMPT = `You are ${APP_NAME}, a privacy-first AI assistant that lives in the user's browser sidebar. You can access the user's current tab with your tools.
 
 Tool choice:
