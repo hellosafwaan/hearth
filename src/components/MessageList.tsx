@@ -15,7 +15,7 @@ export function MessageList(props: {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages, live.streamText, live.toolName, running]);
+  }, [messages, live.streamText, live.toolNames, running]);
 
   return (
     <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
@@ -28,8 +28,14 @@ export function MessageList(props: {
           <ReactMarkdown>{live.streamText}</ReactMarkdown>
         </div>
       )}
-      {running && live.toolName && <ToolChip name={live.toolName} pending />}
-      {running && !live.streamText && !live.toolName && (
+      {running && live.toolNames.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {live.toolNames.map((name, i) => (
+            <ToolChip key={`${name}-${i}`} name={name} pending />
+          ))}
+        </div>
+      )}
+      {running && !live.streamText && live.toolNames.length === 0 && (
         <div className="animate-pulse text-xs text-zinc-500">thinking…</div>
       )}
 

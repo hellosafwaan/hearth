@@ -11,6 +11,7 @@ import {
 } from './executors/page';
 import { executeScreenshot } from './executors/screenshot';
 import { executeListTabs, executeWait } from './executors/utility';
+import { withRetry } from './retry';
 
 export interface ToolExecResult {
   content: (TextPart | ImagePart)[];
@@ -21,7 +22,7 @@ export type ToolExecutor = (input: Record<string, unknown>) => Promise<ToolExecR
 
 // v2: this is where tools get routed to their execution context —
 // content-script tools (read_page, click) vs extension-API tools (open_tab).
-export const toolRegistry: Record<string, ToolExecutor> = {
+const executors: Record<string, ToolExecutor> = {
   read_page: executeReadPage,
   get_selected_text: executeGetSelectedText,
   screenshot: executeScreenshot,
@@ -37,3 +38,9 @@ export const toolRegistry: Record<string, ToolExecutor> = {
   wait: executeWait,
   list_tabs: executeListTabs,
 };
+
+// Every tool gets one automatic retry on transient failures (content script
+// not ready, dropped message channel) — see retry.ts for what qualifies.
+export const toolRegistry: Record<string, ToolExecutor> = Object.fromEntries(
+  Object.entries(executors).map(([name, executor]) => [name, withRetry(executor)]),
+);

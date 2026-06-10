@@ -1,4 +1,5 @@
 import { MAX_AGENT_STEPS, SYSTEM_PROMPT } from '../constants';
+import { pruneForRequest } from './prune';
 import type {
   ChatMessage,
   Provider,
@@ -32,6 +33,8 @@ export interface AgentOptions {
   registry: Record<string, ToolExecutor>;
   /** Names of tools that must pass requestApproval before executing. */
   actingTools?: ReadonlySet<string>;
+  /** Order-sensitive tools that must not run concurrently (scroll, wait). */
+  sequentialTools?: ReadonlySet<string>;
   signal?: AbortSignal;
   callbacks: AgentCallbacks;
 }
@@ -57,12 +60,14 @@ function raceWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T>
 }
 
 export async function runAgent(options: AgentOptions): Promise<void> {
-  const { provider, model, tools, registry, actingTools, signal, callbacks } = options;
+  const { provider, model, tools, registry, actingTools, sequentialTools, signal, callbacks } =
+    options;
   const messages = [...options.history];
 
   for (let step = 0; step < MAX_AGENT_STEPS; step++) {
     const { message, stopReason } = await provider.stream(
-      { model, system: SYSTEM_PROMPT, messages, tools },
+      // Pruned copy goes to the provider; local history stays full-fidelity.
+      { model, system: SYSTEM_PROMPT, messages: pruneForRequest(messages), tools },
       { signal, onTextDelta: callbacks.onTextDelta },
     );
 
@@ -72,14 +77,50 @@ export async function runAgent(options: AgentOptions): Promise<void> {
     const toolUses = message.parts.filter((p): p is ToolUsePart => p.type === 'tool_use');
     if (stopReason !== 'tool_use' || toolUses.length === 0) return;
 
-    const results: ToolResultPart[] = [];
-    for (const toolUse of toolUses) {
+    // Results are placed by original index — tool_result order and ids must
+    // match the tool_use order (Anthropic and Gemini both require this).
+    const results: ToolResultPart[] = new Array(toolUses.length);
+
+    const execute = async (toolUse: ToolUsePart): Promise<ToolResultPart> => {
+      callbacks.onToolStart(toolUse);
+      const executor = registry[toolUse.name];
+      const result = executor
+        ? await executor(toolUse.input)
+        : {
+            content: [{ type: 'text' as const, text: `Unknown tool: ${toolUse.name}` }],
+            isError: true,
+          };
+      return {
+        type: 'tool_result',
+        toolUseId: toolUse.id,
+        toolName: toolUse.name,
+        content: result.content,
+        isError: result.isError,
+      };
+    };
+
+    // Read-only tools run concurrently; acting and order-sensitive tools run
+    // afterwards, sequentially, in their original order — so the page is
+    // stable by the time the user sees an approval prompt.
+    const isSequential = (name: string) =>
+      (actingTools?.has(name) ?? false) || (sequentialTools?.has(name) ?? false);
+
+    signal?.throwIfAborted();
+    await Promise.all(
+      toolUses.map(async (toolUse, index) => {
+        if (isSequential(toolUse.name)) return;
+        results[index] = await execute(toolUse);
+      }),
+    );
+
+    for (const [index, toolUse] of toolUses.entries()) {
+      if (!isSequential(toolUse.name)) continue;
       signal?.throwIfAborted();
 
       if (actingTools?.has(toolUse.name) && callbacks.requestApproval) {
         const approved = await raceWithAbort(callbacks.requestApproval(toolUse), signal);
         if (!approved) {
-          results.push({
+          results[index] = {
             type: 'tool_result',
             toolUseId: toolUse.id,
             toolName: toolUse.name,
@@ -90,31 +131,27 @@ export async function runAgent(options: AgentOptions): Promise<void> {
               },
             ],
             isError: true,
-          });
+          };
           continue;
         }
       }
 
-      callbacks.onToolStart(toolUse);
-
-      const executor = registry[toolUse.name];
-      const result = executor
-        ? await executor(toolUse.input)
-        : {
-            content: [{ type: 'text' as const, text: `Unknown tool: ${toolUse.name}` }],
-            isError: true,
-          };
-
-      results.push({
-        type: 'tool_result',
-        toolUseId: toolUse.id,
-        toolName: toolUse.name,
-        content: result.content,
-        isError: result.isError,
-      });
+      results[index] = await execute(toolUse);
     }
 
     const toolMessage: ChatMessage = { role: 'user', parts: results };
+
+    // Two full steps remain after this one — tell the model to land the plane
+    // instead of getting chopped off by the cap.
+    if (step === MAX_AGENT_STEPS - 3) {
+      toolMessage.parts.push({
+        type: 'text',
+        text:
+          '[system note] You have 2 tool steps remaining for this request. Wrap up: finish ' +
+          "with what you have or tell the user what's left to do. Do not start new multi-step work.",
+      });
+    }
+
     await callbacks.onToolMessage(toolMessage);
     messages.push(toolMessage);
   }

@@ -44,6 +44,21 @@ async function getActiveTab() {
   return tab;
 }
 
+const TAB_MESSAGE_TIMEOUT_MS = 15_000;
+
+/** A wedged tab should produce a classifiable error, not hang the agent loop. */
+function withTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Tab message timed out after ${TAB_MESSAGE_TIMEOUT_MS / 1000}s.`)),
+        TAB_MESSAGE_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
+
 /**
  * Sends a request to the content script in the active tab. If the content
  * script isn't there (tab opened before the extension loaded), injects it
@@ -55,7 +70,7 @@ export async function sendToActiveTab<T extends ContentRequest>(
   const tab = await getActiveTab();
 
   try {
-    return await browser.tabs.sendMessage(tab.id!, request);
+    return await withTimeout(browser.tabs.sendMessage(tab.id!, request));
   } catch {
     // Content script not present — try injecting it, then retry.
   }
@@ -66,7 +81,7 @@ export async function sendToActiveTab<T extends ContentRequest>(
       target: { tabId: tab.id! },
       files: ['content-scripts/content.js'],
     });
-    return await browser.tabs.sendMessage(tab.id!, request);
+    return await withTimeout(browser.tabs.sendMessage(tab.id!, request));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const granted = await browser.permissions

@@ -1,13 +1,21 @@
 export const APP_NAME = 'Sidekick';
 
 // With the approval gate on acting tools, multi-step browsing needs headroom.
-export const MAX_AGENT_STEPS = 10;
+// The loop warns the model 2 steps before the cap so it can wrap up cleanly.
+export const MAX_AGENT_STEPS = 24;
 
 // Anthropic vision sweet spot — larger images cost more tokens with no accuracy gain.
 export const SCREENSHOT_MAX_DIM = 1568;
 
 // ~8K tokens of page text — enough for almost any article without blowing up cost.
 export const READ_PAGE_MAX_CHARS = 30000;
+
+// Send-time pruning (lib/agent/prune.ts): what's kept at full fidelity in
+// provider requests. The DB always keeps everything.
+export const KEEP_RECENT_IMAGES = 2;
+export const KEEP_RECENT_TOOL_RESULTS = 6;
+export const PRUNE_TEXT_THRESHOLD = 1500;
+export const PRUNE_TEXT_KEEP = 300;
 
 export const DEFAULT_MODEL = 'claude-sonnet-4-6';
 

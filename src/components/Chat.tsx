@@ -6,7 +6,7 @@ import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
 import { createProvider, supportsTools, supportsVision } from '../lib/providers';
 import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
 import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
-import { ACTING_TOOLS, toolDefinitions } from '../lib/tools/definitions';
+import { ACTING_TOOLS, SEQUENTIAL_TOOLS, toolDefinitions } from '../lib/tools/definitions';
 import { toolRegistry } from '../lib/tools/registry';
 import { shrinkImagesForStorage } from '../lib/image';
 import { ApprovalCard, type ApprovalDecision, type PendingApproval } from './ApprovalCard';
@@ -27,7 +27,8 @@ async function getActiveTabOrigin(): Promise<string | null> {
 
 export interface LiveState {
   streamText: string;
-  toolName: string | null;
+  /** Tools currently executing — several can run in parallel. */
+  toolNames: string[];
 }
 
 export interface ComposerDraft {
@@ -50,7 +51,7 @@ export function Chat(props: {
   );
 
   const [running, setRunning] = useState(false);
-  const [live, setLive] = useState<LiveState>({ streamText: '', toolName: null });
+  const [live, setLive] = useState<LiveState>({ streamText: '', toolNames: [] });
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -83,7 +84,7 @@ export function Chat(props: {
     if (running || !text.trim()) return;
     setError(null);
     setRunning(true);
-    setLive({ streamText: '', toolName: null });
+    setLive({ streamText: '', toolNames: [] });
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -113,6 +114,7 @@ export function Chat(props: {
         tools,
         registry: toolRegistry,
         actingTools: ACTING_TOOLS,
+        sequentialTools: SEQUENTIAL_TOOLS,
         signal: controller.signal,
         callbacks: {
           requestApproval,
@@ -120,12 +122,13 @@ export function Chat(props: {
             setLive((s) => ({ ...s, streamText: s.streamText + delta })),
           onAssistantMessage: async (message) => {
             await appendMessage(convId, message);
-            setLive({ streamText: '', toolName: null });
+            setLive({ streamText: '', toolNames: [] });
           },
-          onToolStart: (part) => setLive((s) => ({ ...s, toolName: part.name })),
+          onToolStart: (part) =>
+            setLive((s) => ({ ...s, toolNames: [...s.toolNames, part.name] })),
           onToolMessage: async (message) => {
             await appendMessage(convId, await shrinkImagesForStorage(message));
-            setLive((s) => ({ ...s, toolName: null }));
+            setLive((s) => ({ ...s, toolNames: [] }));
           },
         },
       });
@@ -136,7 +139,7 @@ export function Chat(props: {
     } finally {
       abortRef.current = null;
       setRunning(false);
-      setLive({ streamText: '', toolName: null });
+      setLive({ streamText: '', toolNames: [] });
       setPendingApproval(null);
     }
   }

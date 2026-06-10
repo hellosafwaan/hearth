@@ -12,6 +12,13 @@ export const ACTING_TOOLS: ReadonlySet<string> = new Set([
   'open_tab',
 ]);
 
+/**
+ * Order-sensitive tools that must not run concurrently with others in the
+ * same turn (a scroll changes what a parallel screenshot would capture).
+ * They run with the sequential batch but skip the approval gate.
+ */
+export const SEQUENTIAL_TOOLS: ReadonlySet<string> = new Set(['scroll', 'wait']);
+
 export const toolDefinitions: ToolDefinition[] = [
   {
     name: 'read_page',
