@@ -1,0 +1,39 @@
+# Sidekick Project Brief: "Paper & Clay" Edition
+
+## 1. Project Overview
+Sidekick is a human-centric AI browser companion designed for a narrow (320px) mobile extension viewport. It focuses on transparency, trust, and tactile minimalism, moving away from high-contrast "developer" aesthetics toward an organic, "paper-like" productivity experience.
+
+## 2. Design Philosophy: "Human & Native"
+- **Aesthetic**: "Paper & Clay" — Warm stone-gray and off-white backgrounds with soft clay-blue accents. 
+- **Tactility**: Subtle 1px outlines and soft depth shadows instead of harsh borders or high-contrast fills.
+- **Hierarchy**: Dropdown-based navigation in the header to preserve vertical space; removal of persistent footer navigation.
+- **Typography**: System-native font stack with generous line-height and de-emphasized metadata for readability in narrow widths.
+
+## 3. Core Functional Components
+
+### A. Agent Activity Timeline
+A sophisticated trace system for AI actions:
+- **Collapsible Tracing**: One-line summary headers ("N steps") expand to a vertical timeline.
+- **Batch Processing**: Parallel tool calls are grouped into "Batch" nodes with individual status checklists (Checkmark, Spinner, Error).
+- **Visual Evidence**: Inline thumbnails for visual outputs like screenshots directly within the timeline row.
+- **Transparency**: De-emphasized footer rows showing raw tool names for auditability.
+
+### B. Human-Centric Approval Workflow
+- **External Request Logic**: Clear action verbs, target domain identification, and monospace data payload previews.
+- **Permission Context**: Preceding context (the activity timeline) is preserved above the request card so users know *why* an action is being requested.
+- **Security Affirmation**: "Privacy Secure" badges and clear "Approve/Deny" actions with tactile feedback.
+
+### C. Developer-Grade Chat Interface
+- **Response Handling**: Markdown support with syntax highlighting, language labels, and "Copy" buttons.
+- **Responsiveness**: Horizontal scroll affordances for wide code blocks and tables within the 320px constraint.
+- **Streaming State**: Pulsing activity nodes integrated into the timeline to indicate "Thinking..." states.
+
+## 4. Technical Specs & Constraints
+- **Target Viewport**: 320px width (standard browser extension panel).
+- **Navigation Strategy**: Header-based dropdown (Hamburger + Title dropdown).
+- **State Persistence**: Privacy-first local storage for API keys and workspace settings.
+
+## 5. Key Screens
+- **Sidekick - Chat (Refined)**: Main conversation view with timeline integration.
+- **Sidekick - Approval (Refined)**: Permission gate for external tool execution.
+- **Sidekick - Settings (Refined)**: Provider, capability, and host permission management.

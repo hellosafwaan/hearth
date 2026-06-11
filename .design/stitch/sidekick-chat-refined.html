@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sidekick | Chat Context</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#506071",
+                        "primary-fixed-dim": "#b8c8db",
+                        "tertiary-fixed": "#f6decd",
+                        "on-error": "#ffffff",
+                        "surface": "#fcf9f8",
+                        "primary": "#455565",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dcd9d8",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "background": "#fcf9f8",
+                        "secondary": "#625d59",
+                        "on-tertiary-container": "#ffeada",
+                        "on-primary-container": "#e2efff",
+                        "on-surface": "#1b1c1b",
+                        "secondary-fixed": "#e9e1db",
+                        "outline": "#74777c",
+                        "tertiary-fixed-dim": "#d9c2b2",
+                        "surface-variant": "#e4e2e1",
+                        "tertiary": "#605043",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-secondary-fixed": "#1e1b18",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container-low": "#f6f3f2",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#d3e4f8",
+                        "secondary-container": "#e9e1db",
+                        "outline-variant": "#c4c6cc",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#534437",
+                        "on-primary-fixed-variant": "#394858",
+                        "inverse-surface": "#303030",
+                        "on-tertiary-fixed": "#25190f",
+                        "tertiary-container": "#7a685a",
+                        "on-surface-variant": "#43474c",
+                        "surface-container-high": "#eae7e7",
+                        "surface-container": "#f0edec",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#cdc5bf",
+                        "on-secondary-fixed-variant": "#4a4642",
+                        "inverse-primary": "#b8c8db",
+                        "on-secondary-container": "#69635f",
+                        "primary-container": "#5d6d7e",
+                        "on-primary-fixed": "#0c1d2b",
+                        "on-background": "#1b1c1b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "card-inset": "12px",
+                        "container-padding": "16px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    },
+                    "animation": {
+                        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #fcf9f8;
+            color: #1b1c1b;
+        }
+        .paper-shadow {
+            box-shadow: 0 4px 12px -2px rgba(93, 109, 126, 0.08), 0 2px 4px -1px rgba(93, 109, 126, 0.04);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .markdown-table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(196, 198, 204, 0.3);
+            margin: 12px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f6f3f2;
+            text-align: left;
+            padding: 8px 12px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(196, 198, 204, 0.3);
+        }
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(196, 198, 204, 0.1);
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+<!-- Top AppBar -->
+<header class="fixed top-0 w-full h-14 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm shadow-black/5 flex items-center justify-between px-container-padding max-w-[420px] mx-auto left-0 right-0" id="top-bar">
+<div class="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-primary">menu</span>
+<div class="relative group">
+<div class="flex items-center gap-1" onclick="event.stopPropagation(); toggleDropdown()">
+<h1 class="font-headline-md text-headline-md font-semibold text-primary">Chat Context</h1>
+<span class="material-symbols-outlined text-primary text-[18px]" id="dropdown-chevron">expand_more</span>
+</div>
+<!-- Styled Dropdown Menu -->
+<div class="absolute left-0 mt-2 w-48 bg-surface border border-outline-variant/30 rounded-xl shadow-xl hidden opacity-0 transition-all duration-200 transform origin-top-left -translate-y-2" id="header-dropdown">
+<div class="py-2">
+<a class="flex items-center gap-3 px-4 py-2 hover:bg-surface-container transition-colors text-on-surface" href="#">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-body-md text-body-md">New Thread</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 hover:bg-surface-container transition-colors text-on-surface" href="#">
+<span class="material-symbols-outlined text-[20px]">folder</span>
+<span class="font-body-md text-body-md">Projects</span>
+</a>
+<div class="my-1 border-t border-outline-variant/20"></div>
+<a class="flex items-center gap-3 px-4 py-2 hover:bg-surface-container transition-colors text-on-surface" href="#">
+<span class="material-symbols-outlined text-[20px]">archive</span>
+<span class="font-body-md text-body-md">Archived</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center">
+<button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-secondary-container/50 transition-colors cursor-pointer active:scale-95">
+<span class="material-symbols-outlined text-primary">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Navigation Drawer -->
+<div class="fixed inset-0 bg-black/20 z-[55] hidden opacity-0 transition-opacity duration-300" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<aside class="fixed left-0 top-0 h-full w-[280px] z-[60] bg-surface shadow-xl shadow-black/10 flex flex-col p-4 gap-stack-gap -translate-x-full transition-transform duration-300 ease-in-out" id="nav-drawer">
+<div class="px-3 py-4">
+<h2 class="font-headline-lg text-headline-lg text-primary">Menu</h2>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-3 py-2 transition-colors tap-highlight-transparent active:opacity-80" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md text-body-md">History</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 transition-colors tap-highlight-transparent active:opacity-80" href="#">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body-md text-body-md">Models</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 transition-colors tap-highlight-transparent active:opacity-80" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-body-md text-body-md">Prompts</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 transition-colors tap-highlight-transparent active:opacity-80" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-14 mb-24 overflow-y-auto no-scrollbar max-w-[420px] mx-auto w-full px-container-padding flex flex-col">
+<!-- Empty State -->
+<div class="py-12 flex flex-col items-center text-center animate-fade-in">
+<div class="w-16 h-16 bg-primary-container/10 rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">Sidekick</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[280px] mb-8">
+                Your architectural companion for clarity. Your data remains private and secure in this context.
+            </p>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-low rounded-full mb-10 border border-outline-variant/20">
+<span class="material-symbols-outlined text-primary text-[16px]">shield</span>
+<span class="font-label-md text-label-md text-primary">Privacy Promise Active</span>
+</div>
+</div>
+<!-- Transcript Section -->
+<div class="flex flex-col gap-stack-gap mt-4 pb-4">
+<!-- User Message -->
+<div class="flex flex-col items-end gap-1">
+<div class="bg-primary-container text-on-primary-container px-4 py-3 rounded-2xl rounded-tr-none max-w-[85%] paper-shadow">
+<p class="font-body-md text-body-md">Can you analyze the technical specifications on this document?</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant px-1">Just now</span>
+</div>
+<!-- Agent Activity Timeline -->
+<div class="flex flex-col gap-2 w-full max-w-[420px]">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="font-label-md text-label-md">3 steps</span>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+<div class="relative pl-4 flex flex-col gap-4">
+<div class="absolute left-[7px] top-2 bottom-2 w-[1px] border-l border-dashed border-outline-variant/40"></div>
+<div class="relative flex items-center gap-3">
+<div class="w-4 h-4 rounded-full bg-surface-container border border-outline-variant/30 flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">list_alt</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Created a plan</span>
+</div>
+</div>
+<div class="relative flex flex-col gap-3">
+<div class="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-surface-container border border-outline-variant/30 flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-primary text-[12px]">content_copy</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-xl p-3 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant">Batch — 2/2 actions</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_less</span>
+</div>
+<div class="flex flex-col gap-2 pl-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">photo_camera</span>
+<span class="font-body-md text-body-md text-on-surface">Take screenshot</span>
+</div>
+<div class="w-10 h-8 rounded border border-outline-variant/20 overflow-hidden bg-surface-container-highest">
+<div class="w-full h-full bg-slate-300"></div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">visibility</span>
+<span class="font-body-md text-body-md text-on-surface">Extract page text</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Pulsing 'Thinking' Status Node -->
+<div class="relative flex items-center gap-3">
+<div class="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center z-10">
+<div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-slow"></div>
+</div>
+<span class="font-body-md text-body-md text-primary font-medium">Analyzing results...</span>
+</div>
+</div>
+</div>
+<!-- AI Response with Enhanced Markdown -->
+<div class="flex flex-col items-start gap-3">
+<div class="bg-surface-container-highest/40 text-on-surface px-4 py-3 rounded-2xl rounded-tl-none max-w-[95%] border border-outline-variant/10">
+<div class="flex flex-col gap-3">
+<p class="font-body-md text-body-md">I've completed the analysis of the technical specifications. Here are the key performance metrics extracted from the document:</p>
+<!-- Table with Horizontal Scroll -->
+<div class="markdown-table-container no-scrollbar">
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Tolerance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tensile Strength</td>
+<td>450 MPa</td>
+<td>±15 MPa</td>
+</tr>
+<tr>
+<td>Thermal Expansion</td>
+<td>12.5 ppm/K</td>
+<td>±0.5 ppm/K</td>
+</tr>
+<tr>
+<td>Chemical Resistance</td>
+<td>High (Grade A)</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="font-body-md text-body-md">You can use the following script to simulate these values in your environment:</p>
+<!-- Code Block with Language Tag and Copy Button -->
+<div class="relative rounded-lg bg-inverse-surface text-surface border border-outline/20 overflow-hidden flex flex-col">
+<div class="flex items-center justify-between px-3 py-1.5 bg-on-surface-variant/10 border-b border-outline-variant/10">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-surface/60">javascript</span>
+<button class="flex items-center gap-1.5 hover:text-white transition-colors group">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span class="font-label-sm text-label-sm">Copy</span>
+</button>
+</div>
+<div class="overflow-x-auto no-scrollbar p-4">
+<pre class="font-mono text-sm leading-relaxed whitespace-pre"><code>const specs = {
+  tensileStrength: 450,
+  thermalExpansion: 12.5,
+  resistance: "Grade A",
+  unit: "metric"
+};
+
+function validateSpec(val, target) {
+  return Math.abs(val - target) &lt; 15;
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant px-1">Thinking for 4s</span>
+</div>
+</div>
+</main>
+<!-- Bottom Composer Area -->
+<div class="fixed bottom-0 w-full bg-surface/95 backdrop-blur-md z-40 max-w-[420px] mx-auto left-0 right-0 px-container-padding pb-6 pt-2">
+<div class="relative flex items-end gap-2 bg-white border border-outline-variant/40 rounded-2xl p-2 paper-shadow focus-within:border-primary transition-colors">
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none font-body-md text-body-md py-2 px-2 max-h-32 text-on-surface placeholder-on-surface-variant/60" id="composer" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" placeholder="Ask Sidekick..." rows="1"></textarea>
+<button class="w-10 h-10 flex items-center justify-center bg-primary text-white rounded-xl shadow-md active:scale-90 transition-transform hover:bg-primary/90">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_upward</span>
+</button>
+</div>
+<div class="mt-2 flex justify-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant/50">Tactile Minimalism • v2.4</span>
+</div>
+</div>
+<script>
+        function toggleDrawer() {
+            const drawer = document.getElementById('nav-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            const isOpen = drawer.style.transform === 'translateX(0px)';
+            
+            if (isOpen) {
+                drawer.style.transform = 'translateX(-100%)';
+                overlay.classList.add('hidden');
+                overlay.style.opacity = '0';
+            } else {
+                drawer.style.transform = 'translateX(0)';
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.style.opacity = '1';
+                }, 10);
+            }
+        }
+
+        function toggleDropdown() {
+            const dropdown = document.getElementById('header-dropdown');
+            const chevron = document.getElementById('dropdown-chevron');
+            const isHidden = dropdown.classList.contains('hidden');
+            
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                setTimeout(() => {
+                    dropdown.classList.remove('opacity-0', '-translate-y-2');
+                    dropdown.classList.add('opacity-100', 'translate-y-0');
+                    chevron.style.transform = 'rotate(180deg)';
+                }, 10);
+            } else {
+                dropdown.classList.add('opacity-0', '-translate-y-2');
+                dropdown.classList.remove('opacity-100', 'translate-y-0');
+                chevron.style.transform = 'rotate(0deg)';
+                setTimeout(() => dropdown.classList.add('hidden'), 200);
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('header-dropdown');
+            if (!dropdown.classList.contains('hidden') && !e.target.closest('#header-dropdown') && !e.target.closest('[onclick="event.stopPropagation(); toggleDropdown()"]')) {
+                toggleDropdown();
+            }
+        });
+
+        // Auto-focus textarea on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const composer = document.getElementById('composer');
+            composer.focus();
+        });
+    </script>
+</body></html>

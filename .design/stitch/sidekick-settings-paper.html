@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sidekick Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Design System Tokens -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "surface-tint": "#506071",
+                    "primary-fixed-dim": "#b8c8db",
+                    "tertiary-fixed": "#f6decd",
+                    "on-error": "#ffffff",
+                    "surface": "#fcf9f8",
+                    "primary": "#455565",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#dcd9d8",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#f3f0ef",
+                    "background": "#fcf9f8",
+                    "secondary": "#625d59",
+                    "on-tertiary-container": "#ffeada",
+                    "on-primary-container": "#e2efff",
+                    "on-surface": "#1b1c1b",
+                    "secondary-fixed": "#e9e1db",
+                    "outline": "#74777c",
+                    "tertiary-fixed-dim": "#d9c2b2",
+                    "surface-variant": "#e4e2e1",
+                    "tertiary": "#605043",
+                    "surface-container-highest": "#e4e2e1",
+                    "on-secondary-fixed": "#1e1b18",
+                    "surface-bright": "#fcf9f8",
+                    "surface-container-low": "#f6f3f2",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#d3e4f8",
+                    "secondary-container": "#e9e1db",
+                    "outline-variant": "#c4c6cc",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#534437",
+                    "on-primary-fixed-variant": "#394858",
+                    "inverse-surface": "#303030",
+                    "on-tertiary-fixed": "#25190f",
+                    "tertiary-container": "#7a685a",
+                    "on-surface-variant": "#43474c",
+                    "surface-container-high": "#eae7e7",
+                    "surface-container": "#f0edec",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#cdc5bf",
+                    "on-secondary-fixed-variant": "#4a4642",
+                    "inverse-primary": "#b8c8db",
+                    "on-secondary-container": "#69635f",
+                    "primary-container": "#5d6d7e",
+                    "on-primary-fixed": "#0c1d2b",
+                    "on-background": "#1b1c1b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "card-inset": "12px",
+                    "container-padding": "16px",
+                    "stack-gap": "12px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #fcf9f8;
+            color: #1b1c1b;
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            user-select: none;
+        }
+        .custom-toggle:checked + .toggle-dot {
+            transform: translateX(100%);
+            background-color: #ffffff;
+        }
+        .custom-toggle:checked + .toggle-dot + .toggle-bg {
+            background-color: #5d6d7e;
+        }
+        .dropdown-animate {
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .dropdown-hidden {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            pointer-events: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full h-14 z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md border-b border-outline-variant/30 flex items-center justify-between px-container-padding max-w-[420px] mx-auto shadow-sm shadow-black/5">
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform" id="nav-trigger">
+<span class="material-symbols-outlined text-primary">settings</span>
+<h1 class="font-headline-md text-headline-md font-semibold text-primary">Settings</h1>
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
+</div>
+<!-- Context Dropdown Menu -->
+<div class="absolute top-16 left-4 right-4 bg-surface dark:bg-surface-dim shadow-xl rounded-xl p-2 dropdown-animate dropdown-hidden z-[60] border border-outline-variant/20" id="nav-dropdown">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors active:opacity-80">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md text-body-md">History</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors active:opacity-80">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body-md text-body-md">Models</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors active:opacity-80">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-body-md text-body-md">Prompts</span>
+</div>
+<div class="flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-3 py-2 cursor-pointer transition-colors active:opacity-80">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md font-bold">Settings</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary-container/50 transition-colors">
+<span class="material-symbols-outlined text-primary">more_vert</span>
+</button>
+</div>
+</header>
+<main class="w-full max-w-[420px] pt-20 pb-10 px-gutter flex flex-col gap-8">
+<!-- Section: Provider -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-label-md text-label-md uppercase tracking-wider text-outline px-1">Provider</h2>
+<div class="bg-surface-container-low rounded-xl p-1 overflow-hidden">
+<!-- Dropdown-like select -->
+<div class="flex items-center justify-between p-card-inset hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Model Engine</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Claude 3.5 Sonnet</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<div class="h-px bg-outline-variant/30 mx-card-inset"></div>
+<!-- Input Row -->
+<div class="flex flex-col p-card-inset gap-1">
+<span class="font-body-md text-body-md text-on-surface font-medium">API Key</span>
+<div class="flex items-center gap-2">
+<input class="flex-grow bg-transparent border border-outline-variant/40 rounded-lg px-3 py-2 font-body-md text-body-md focus:ring-1 focus:ring-primary focus:border-primary transition-all" readonly="" type="password" value="••••••••••••••••"/>
+<button class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Capabilities -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-label-md text-label-md uppercase tracking-wider text-outline px-1">Capabilities</h2>
+<div class="bg-surface-container-low rounded-xl p-1 overflow-hidden">
+<!-- Toggle Row 1 -->
+<label class="flex items-center justify-between p-card-inset cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex flex-col pr-4">
+<span class="font-body-md text-body-md text-on-surface font-medium">Web Search</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Allow sidekick to browse the internet</span>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only custom-toggle" type="checkbox"/>
+<div class="toggle-bg block w-10 h-6 bg-outline-variant/50 rounded-full transition-colors"></div>
+<div class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></div>
+</div>
+</label>
+<div class="h-px bg-outline-variant/30 mx-card-inset"></div>
+<!-- Toggle Row 2 -->
+<label class="flex items-center justify-between p-card-inset cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex flex-col pr-4">
+<span class="font-body-md text-body-md text-on-surface font-medium">Context Memory</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Persist short-term history across tabs</span>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only custom-toggle" type="checkbox"/>
+<div class="toggle-bg block w-10 h-6 bg-outline-variant/50 rounded-full transition-colors"></div>
+<div class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></div>
+</div>
+</label>
+<div class="h-px bg-outline-variant/30 mx-card-inset"></div>
+<!-- Toggle Row 3 -->
+<label class="flex items-center justify-between p-card-inset cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex flex-col pr-4">
+<span class="font-body-md text-body-md text-on-surface font-medium">Auto-approval</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Execute safe tools without asking</span>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only custom-toggle" type="checkbox"/>
+<div class="toggle-bg block w-10 h-6 bg-outline-variant/50 rounded-full transition-colors"></div>
+<div class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></div>
+</div>
+</label>
+</div>
+</section>
+<!-- Section: Permissions -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-label-md text-label-md uppercase tracking-wider text-outline px-1">Permissions</h2>
+<div class="bg-surface-container-low rounded-xl p-1 overflow-hidden">
+<div class="flex items-center justify-between p-card-inset hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container">language</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Domain Access</span>
+<span class="font-label-md text-label-md text-on-surface-variant">8 sites allowed</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+<div class="h-px bg-outline-variant/30 mx-card-inset"></div>
+<div class="flex items-center justify-between p-card-inset hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container">mic</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Voice Input</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Enabled</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Destructive Actions -->
+<section class="mt-4 flex flex-col gap-3">
+<button class="w-full py-4 px-4 bg-error-container/20 text-error rounded-xl font-body-md text-body-md font-semibold border border-error/10 hover:bg-error-container/30 transition-colors flex items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-[20px] group-active:scale-90 transition-transform">delete_sweep</span>
+                Clear History
+            </button>
+<p class="text-center font-label-md text-label-md text-outline px-4">
+                Deleting history will remove all chat contexts and local memory permanently.
+            </p>
+</section>
+<!-- Footer Branding -->
+<footer class="mt-12 flex flex-col items-center gap-1 opacity-40">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+<span class="font-label-sm text-label-sm uppercase tracking-[0.1em]">Sidekick v2.4.0</span>
+</div>
+</footer>
+</main>
+<!-- Micro-interactions Script -->
+<script>
+        const trigger = document.getElementById('nav-trigger');
+        const dropdown = document.getElementById('nav-dropdown');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('dropdown-hidden');
+            const icon = trigger.querySelector('.material-symbols-outlined:last-child');
+            icon.style.transform = dropdown.classList.contains('dropdown-hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+            icon.style.transition = 'transform 0.2s ease';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !trigger.contains(e.target)) {
+                dropdown.classList.add('dropdown-hidden');
+                trigger.querySelector('.material-symbols-outlined:last-child').style.transform = 'rotate(0deg)';
+            }
+        });
+
+        // Add active states to toggle rows
+        document.querySelectorAll('label').forEach(label => {
+            label.addEventListener('touchstart', () => {
+                label.style.backgroundColor = '#f0edec';
+            });
+            label.addEventListener('touchend', () => {
+                label.style.backgroundColor = '';
+            });
+        });
+    </script>
+</body></html>

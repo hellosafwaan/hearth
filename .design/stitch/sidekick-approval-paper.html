@@ -1,0 +1,312 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #fcf9f8;
+            color: #1b1c1b;
+            overflow-x: hidden;
+        }
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar for subtle notebook feel */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e2dedb;
+            border-radius: 10px;
+        }
+        .paper-shadow {
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#506071",
+                      "primary-fixed-dim": "#b8c8db",
+                      "tertiary-fixed": "#f6decd",
+                      "on-error": "#ffffff",
+                      "surface": "#fcf9f8",
+                      "primary": "#455565",
+                      "on-error-container": "#93000a",
+                      "surface-dim": "#dcd9d8",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#f3f0ef",
+                      "background": "#fcf9f8",
+                      "secondary": "#625d59",
+                      "on-tertiary-container": "#ffeada",
+                      "on-primary-container": "#e2efff",
+                      "on-surface": "#1b1c1b",
+                      "secondary-fixed": "#e9e1db",
+                      "outline": "#74777c",
+                      "tertiary-fixed-dim": "#d9c2b2",
+                      "surface-variant": "#e4e2e1",
+                      "tertiary": "#605043",
+                      "surface-container-highest": "#e4e2e1",
+                      "on-secondary-fixed": "#1e1b18",
+                      "surface-bright": "#fcf9f8",
+                      "surface-container-low": "#f6f3f2",
+                      "on-tertiary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "primary-fixed": "#d3e4f8",
+                      "secondary-container": "#e9e1db",
+                      "outline-variant": "#c4c6cc",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed-variant": "#534437",
+                      "on-primary-fixed-variant": "#394858",
+                      "inverse-surface": "#303030",
+                      "on-tertiary-fixed": "#25190f",
+                      "tertiary-container": "#7a685a",
+                      "on-surface-variant": "#43474c",
+                      "surface-container-high": "#eae7e7",
+                      "surface-container": "#f0edec",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#cdc5bf",
+                      "on-secondary-fixed-variant": "#4a4642",
+                      "inverse-primary": "#b8c8db",
+                      "on-secondary-container": "#69635f",
+                      "primary-container": "#5d6d7e",
+                      "on-primary-fixed": "#0c1d2b",
+                      "on-background": "#1b1c1b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "card-inset": "12px",
+                      "container-padding": "16px",
+                      "stack-gap": "12px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Manrope"],
+                      "headline-md": ["Manrope"],
+                      "body-md": ["Manrope"],
+                      "body-lg": ["Manrope"],
+                      "headline-lg": ["Manrope"],
+                      "label-md": ["Manrope"]
+              },
+              "fontSize": {
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full h-14 z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm shadow-black/5 flex items-center justify-between px-container-padding max-w-[420px] mx-auto">
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">menu</span>
+</div>
+<div class="relative group cursor-pointer flex items-center gap-1">
+<h1 class="font-headline-md text-headline-md font-semibold text-primary">Chat Context</h1>
+<span class="material-symbols-outlined text-primary text-[18px]">expand_more</span>
+<!-- Dropdown Menu (Hidden by default) -->
+<div class="absolute top-12 left-1/2 -translate-x-1/2 w-48 bg-surface border border-outline-variant/30 rounded-xl paper-shadow opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
+<div class="px-4 py-2 hover:bg-secondary-container/50 transition-colors font-body-md text-body-md text-on-surface flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span> Sidekick Pro
+                </div>
+<div class="px-4 py-2 hover:bg-secondary-container/50 transition-colors font-body-md text-body-md text-on-surface flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">language</span> Web Agent
+                </div>
+<div class="px-4 py-2 hover:bg-secondary-container/50 transition-colors font-body-md text-body-md text-on-surface flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">history</span> Recent Chats
+                </div>
+</div>
+</div>
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">more_vert</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-[420px] pt-20 px-container-padding pb-10 flex flex-col gap-stack-gap">
+<!-- Context Intro -->
+<div class="flex flex-col gap-1 mb-2">
+<p class="font-label-md text-label-md text-outline tracking-wider uppercase">Action Required</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">External Request</h2>
+</div>
+<!-- Approval Card -->
+<section class="bg-surface-container-low rounded-xl p-card-inset paper-shadow border border-outline-variant/20 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<!-- Origin Branding -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant">Target Domain</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">google.com</span>
+</div>
+</div>
+<!-- Description -->
+<div class="bg-surface-container-highest/30 rounded-lg p-3">
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                    Sidekick is requesting permission to <span class="text-on-surface font-semibold">fill out a search form</span> and navigate based on the results. This action will submit data from your current session.
+                </p>
+</div>
+<!-- Code/Data Parameters -->
+<div class="flex flex-col gap-2">
+<span class="font-label-md text-label-md text-outline">Payload Data</span>
+<div class="bg-secondary-fixed/30 rounded-lg p-4 border border-outline-variant/10 overflow-x-auto">
+<pre class="mono-font text-[12px] text-on-secondary-fixed-variant leading-tight">{
+  "action": "form_fill",
+  "selector": "input[name='q']",
+  "value": "Material Design 3 tokens",
+  "submit": true,
+  "options": {
+    "wait_for_network": "idle",
+    "timeout": 5000
+  }
+}</pre>
+</div>
+</div>
+<!-- Always Allow Checkbox -->
+<label class="flex items-center gap-3 cursor-pointer group pt-2">
+<div class="relative flex items-center">
+<input class="peer h-5 w-5 rounded border-outline-variant text-primary focus:ring-primary/20 bg-surface transition-colors cursor-pointer" type="checkbox">
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface transition-colors">Always allow actions on google.com</span>
+</label>
+<!-- CTA Actions -->
+<div class="grid grid-cols-2 gap-3 mt-2">
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md py-3 rounded-lg hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-weight="fill">check_circle</span>
+                    Approve
+                </button>
+<button class="border border-outline-variant text-on-surface-variant font-label-md text-label-md py-3 rounded-lg hover:bg-surface-container-high transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+                    Deny
+                </button>
+</div>
+</section>
+<!-- Information/Security Banner -->
+<div class="bg-tertiary-container/10 border border-tertiary-container/20 rounded-lg p-4 flex gap-4">
+<span class="material-symbols-outlined text-tertiary">shield</span>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm font-bold text-tertiary uppercase tracking-tighter">Privacy Secure</span>
+<p class="font-body-md text-body-md text-on-tertiary-fixed-variant">Sidekick only accesses the necessary fields to complete your request. Credentials are never shared with third-party servers.</p>
+</div>
+</div>
+<!-- History/Activity Log Sneak Peek -->
+<div class="mt-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-widest">Recent Activity</h3>
+<span class="font-label-sm text-label-sm text-primary cursor-pointer hover:underline">View All</span>
+</div>
+<div class="flex flex-col gap-stack-gap">
+<!-- Activity Item 1 -->
+<div class="flex items-center justify-between p-3 bg-surface border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">history</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">Completed Auth</span>
+<span class="font-label-sm text-label-sm text-outline">2 mins ago</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<!-- Activity Item 2 -->
+<div class="flex items-center justify-between p-3 bg-surface border-b border-outline-variant/20 opacity-60">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">Read Document</span>
+<span class="font-label-sm text-label-sm text-outline">15 mins ago</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Side Drawer Overlay (Logic for interaction) -->
+<div class="fixed inset-0 bg-black/20 backdrop-blur-sm z-[55] opacity-0 invisible transition-all duration-300 pointer-events-none" id="drawer"></div>
+<nav class="fixed left-0 top-0 h-full w-[280px] z-[60] bg-surface dark:bg-surface-dim shadow-xl -translate-x-full transition-transform duration-300 flex flex-col p-4 gap-stack-gap" id="navDrawer">
+<div class="flex items-center justify-between mb-4">
+<span class="font-headline-lg text-headline-lg text-primary dark:text-primary-fixed-dim">Menu</span>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors" onclick="toggleDrawer()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md text-body-md">History</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body-md text-body-md">Models</span>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg px-3 py-2 cursor-pointer transition-colors">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-body-md text-body-md">Prompts</span>
+</div>
+<div class="flex items-center gap-3 bg-secondary-container text-on-secondary-container rounded-lg px-3 py-2 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md font-bold">Settings</span>
+</div>
+</div>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-bold text-xs">JS</div>
+<div class="flex flex-col overflow-hidden">
+<span class="font-body-md text-body-md text-on-surface truncate">Julian Schmit</span>
+<span class="font-label-sm text-label-sm text-outline">Pro Plan</span>
+</div>
+</div>
+</div>
+</nav>
+<script>
+        function toggleDrawer() {
+            const drawer = document.getElementById('navDrawer');
+            const overlay = document.getElementById('drawer');
+            const isOpen = drawer.style.transform === 'translateX(0px)';
+            
+            if (isOpen) {
+                drawer.style.transform = 'translateX(-100%)';
+                overlay.style.opacity = '0';
+                overlay.style.visibility = 'hidden';
+                overlay.style.pointerEvents = 'none';
+            } else {
+                drawer.style.transform = 'translateX(0)';
+                overlay.style.opacity = '1';
+                overlay.style.visibility = 'visible';
+                overlay.style.pointerEvents = 'auto';
+            }
+        }
+
+        // Add event listener to the menu icon
+        document.querySelector('header span[data-icon="menu"]').parentElement.onclick = toggleDrawer;
+        document.getElementById('drawer').onclick = toggleDrawer;
+    </script>
+
+
+</body></html>
