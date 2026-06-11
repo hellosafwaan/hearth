@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { ProviderError } from './errors';
 import type {
   ChatMessage,
   ChatRequest,
@@ -8,6 +9,23 @@ import type {
   StreamOptions,
   StreamResult,
 } from './types';
+
+/** Re-throw SDK errors as ProviderError so the loop can retry rate limits. */
+function normalizeError(error: unknown): never {
+  if (error instanceof Anthropic.APIError) {
+    const headers = error.headers as Record<string, string> | undefined;
+    const headerAfter = Number(
+      (typeof (headers as any)?.get === 'function'
+        ? (headers as any).get('retry-after')
+        : headers?.['retry-after']) ?? NaN,
+    );
+    throw new ProviderError(error.message, {
+      status: typeof error.status === 'number' ? error.status : undefined,
+      retryAfterMs: headerAfter > 0 ? headerAfter * 1000 : undefined,
+    });
+  }
+  throw error;
+}
 
 function toAnthropicContent(parts: MessagePart[]): Anthropic.ContentBlockParam[] {
   return parts.map((part): Anthropic.ContentBlockParam => {
@@ -110,19 +128,27 @@ export function createAnthropicProvider(apiKey: string): Provider {
 
       if (options.onTextDelta) stream.on('text', options.onTextDelta);
 
-      const final = await stream.finalMessage();
-      return {
-        message: fromAnthropicMessage(final),
-        stopReason: mapStopReason(final.stop_reason),
-      };
+      try {
+        const final = await stream.finalMessage();
+        return {
+          message: fromAnthropicMessage(final),
+          stopReason: mapStopReason(final.stop_reason),
+        };
+      } catch (error) {
+        normalizeError(error);
+      }
     },
 
     async validateKey(model: string): Promise<void> {
-      await client.messages.create({
-        model,
-        max_tokens: 1,
-        messages: [{ role: 'user', content: 'ping' }],
-      });
+      try {
+        await client.messages.create({
+          model,
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'ping' }],
+        });
+      } catch (error) {
+        normalizeError(error);
+      }
     },
   };
 }

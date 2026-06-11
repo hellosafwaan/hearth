@@ -5,6 +5,7 @@ import { runAgent } from '../lib/agent/loop';
 import { APP_NAME } from '../lib/constants';
 import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
 import { createProvider, supportsTools, supportsVision } from '../lib/providers';
+import { describeProviderError } from '../lib/providers/errors';
 import type { ChatMessage, ToolUsePart } from '../lib/providers/types';
 import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/settings/storage';
 import {
@@ -36,6 +37,8 @@ export interface LiveState {
   streamText: string;
   /** Tools currently executing — several can run in parallel. */
   toolNames: string[];
+  /** Transient status, e.g. "Rate limited — retrying in 8s…". */
+  notice: string | null;
 }
 
 export interface ComposerDraft {
@@ -58,7 +61,7 @@ export function Chat(props: {
   );
 
   const [running, setRunning] = useState(false);
-  const [live, setLive] = useState<LiveState>({ streamText: '', toolNames: [] });
+  const [live, setLive] = useState<LiveState>({ streamText: '', toolNames: [], notice: null });
   const [error, setError] = useState<string | null>(null);
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -91,7 +94,7 @@ export function Chat(props: {
     if (running || !text.trim()) return;
     setError(null);
     setRunning(true);
-    setLive({ streamText: '', toolNames: [] });
+    setLive({ streamText: '', toolNames: [], notice: null });
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -131,7 +134,7 @@ export function Chat(props: {
             setLive((s) => ({ ...s, streamText: s.streamText + delta })),
           onAssistantMessage: async (message) => {
             await appendMessage(convId, message);
-            setLive({ streamText: '', toolNames: [] });
+            setLive((s) => ({ ...s, streamText: '', toolNames: [] }));
           },
           onToolStart: (part) =>
             setLive((s) => ({ ...s, toolNames: [...s.toolNames, part.name] })),
@@ -139,16 +142,17 @@ export function Chat(props: {
             await appendMessage(convId, await shrinkImagesForStorage(message));
             setLive((s) => ({ ...s, toolNames: [] }));
           },
+          onNotice: (notice) => setLive((s) => ({ ...s, notice })),
         },
       });
     } catch (err) {
       if (!isAbortError(err)) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(describeProviderError(err));
       }
     } finally {
       abortRef.current = null;
       setRunning(false);
-      setLive({ streamText: '', toolNames: [] });
+      setLive({ streamText: '', toolNames: [], notice: null });
       setPendingApproval(null);
     }
   }

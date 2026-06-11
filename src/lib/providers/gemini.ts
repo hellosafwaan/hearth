@@ -1,3 +1,4 @@
+import { ProviderError } from './errors';
 import type {
   ChatMessage,
   ChatRequest,
@@ -163,7 +164,17 @@ export function createGeminiProvider(apiKey: string): Provider {
       } catch {
         if (detail) message += `: ${detail.slice(0, 300)}`;
       }
-      throw new Error(message);
+      // Gemini puts the suggested wait in the error text ("retry in 7.8s").
+      const retryMatch = message.match(/retry in ([\d.]+)\s*s/i);
+      const headerAfter = Number(response.headers.get('retry-after'));
+      throw new ProviderError(message, {
+        status: response.status,
+        retryAfterMs: retryMatch
+          ? Math.ceil(parseFloat(retryMatch[1]) * 1000)
+          : headerAfter > 0
+            ? headerAfter * 1000
+            : undefined,
+      });
     }
     return response;
   }

@@ -57,7 +57,13 @@ export function MessageList(props: {
             ))}
           </div>
         )}
-        {running && !live.streamText && live.toolNames.length === 0 && (
+        {running && live.notice && (
+          <div className="flex items-center gap-2 text-body-sm text-caution">
+            <Spinner />
+            {live.notice}
+          </div>
+        )}
+        {running && !live.notice && !live.streamText && live.toolNames.length === 0 && (
           <div className="flex items-center gap-2 text-body-sm text-faint">
             <Spinner />
             Thinking…

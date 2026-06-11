@@ -1,3 +1,4 @@
+import { ProviderError } from './errors';
 import type {
   ChatMessage,
   ChatRequest,
@@ -171,7 +172,11 @@ export function createOpenAICompatibleProvider(config: OpenAICompatibleConfig): 
     }
     if (!response.ok) {
       const detail = await response.text().catch(() => '');
-      throw new Error(`Server error ${response.status}: ${detail.slice(0, 500)}`);
+      const headerAfter = Number(response.headers.get('retry-after'));
+      throw new ProviderError(`Server error ${response.status}: ${detail.slice(0, 500)}`, {
+        status: response.status,
+        retryAfterMs: headerAfter > 0 ? headerAfter * 1000 : undefined,
+      });
     }
     return response;
   }

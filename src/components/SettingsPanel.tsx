@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { APP_NAME, GEMINI_MODELS, MODELS } from '../lib/constants';
+import { APP_NAME, DEFAULT_MODEL, GEMINI_MODELS, MODELS } from '../lib/constants';
 import { exportAllData, importData } from '../lib/db/export';
 import {
   hasDebuggerPermission,
@@ -28,8 +28,28 @@ const BASE_URL_PRESETS = [
   { label: 'Ollama', url: 'http://localhost:11434/v1' },
 ];
 
+/**
+ * A model id only makes sense for the provider it belongs to — carrying
+ * "qwen/qwen3-4b" into the Anthropic dropdown silently 404s. Keep the current
+ * model only when the target provider actually offers it.
+ */
+function modelForProvider(provider: ProviderKind, current: string): string {
+  switch (provider) {
+    case 'anthropic':
+      return MODELS.some((m) => m.id === current) ? current : DEFAULT_MODEL;
+    case 'gemini':
+      return GEMINI_MODELS.some((m) => m.id === current) ? current : GEMINI_MODELS[1].id;
+    case 'openai-compatible':
+      return current;
+  }
+}
+
 export function SettingsPanel(props: { settings: Settings; onDone?: () => void }) {
-  const [draft, setDraft] = useState<Settings>(props.settings);
+  // Heal any provider/model mismatch already saved (pre-fix versions allowed it).
+  const [draft, setDraft] = useState<Settings>(() => ({
+    ...props.settings,
+    model: modelForProvider(props.settings.provider, props.settings.model),
+  }));
   const [showKey, setShowKey] = useState(false);
   const [test, setTest] = useState<TestStatus>({ state: 'idle' });
   const [saved, setSaved] = useState(false);
@@ -57,15 +77,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   }
 
   function switchProvider(provider: ProviderKind) {
-    update({
-      provider,
-      model:
-        provider === 'anthropic'
-          ? props.settings.model || MODELS[1].id
-          : provider === 'gemini'
-            ? GEMINI_MODELS[1].id
-            : draft.model,
-    });
+    update({ provider, model: modelForProvider(provider, draft.model) });
     setLocalModels(null);
   }
 

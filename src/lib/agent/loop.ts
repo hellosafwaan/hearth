@@ -1,8 +1,11 @@
 import { MAX_AGENT_STEPS, SYSTEM_PROMPT } from '../constants';
 import { pruneForRequest } from './prune';
+import { isRetryableProviderError } from '../providers/errors';
 import type {
   ChatMessage,
+  ChatRequest,
   Provider,
+  StreamResult,
   ToolDefinition,
   ToolResultPart,
   ToolUsePart,
@@ -23,6 +26,8 @@ export interface AgentCallbacks {
    * the denial is fed back to the model as an error tool result.
    */
   requestApproval?: (part: ToolUsePart) => Promise<boolean>;
+  /** Transient status for the UI ("Rate limited — retrying in 8s…"); null clears it. */
+  onNotice?: (text: string | null) => void;
 }
 
 export interface AgentOptions {
@@ -59,16 +64,74 @@ function raceWithAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T>
   });
 }
 
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return raceWithAbort(new Promise((resolve) => setTimeout(resolve, ms)), signal);
+}
+
+// Rate limits (429) and overloads (5xx) heal on their own — retry twice with
+// the provider's suggested wait (or a short backoff) before giving up.
+const STREAM_RETRIES = 2;
+const RETRY_BACKOFF_MS = [2_000, 8_000];
+const MAX_RETRY_WAIT_MS = 30_000;
+
+async function streamWithRetry(
+  provider: Provider,
+  request: ChatRequest,
+  signal: AbortSignal | undefined,
+  callbacks: AgentCallbacks,
+): Promise<StreamResult> {
+  for (let attempt = 0; ; attempt++) {
+    // Only retry attempts that failed before any text reached the UI —
+    // retrying a half-streamed response would duplicate visible output.
+    let streamed = false;
+    try {
+      return await provider.stream(request, {
+        signal,
+        onTextDelta: (delta) => {
+          streamed = true;
+          callbacks.onTextDelta(delta);
+        },
+      });
+    } catch (error) {
+      const retryable =
+        !streamed && attempt < STREAM_RETRIES && isRetryableProviderError(error);
+      if (!retryable) throw error;
+
+      const wait = Math.min(
+        (error as { retryAfterMs?: number }).retryAfterMs ?? RETRY_BACKOFF_MS[attempt],
+        MAX_RETRY_WAIT_MS,
+      );
+      const label =
+        (error as { status?: number }).status === 429 ? 'Rate limited' : 'Provider overloaded';
+
+      // Live countdown: re-publish the notice every second until the deadline.
+      const deadline = Date.now() + wait;
+      try {
+        for (;;) {
+          const remaining = deadline - Date.now();
+          if (remaining <= 0) break;
+          callbacks.onNotice?.(`${label} — retrying in ${Math.ceil(remaining / 1000)}s…`);
+          await sleep(Math.min(1_000, remaining), signal);
+        }
+      } finally {
+        callbacks.onNotice?.(null);
+      }
+    }
+  }
+}
+
 export async function runAgent(options: AgentOptions): Promise<void> {
   const { provider, model, tools, registry, actingTools, sequentialTools, signal, callbacks } =
     options;
   const messages = [...options.history];
 
   for (let step = 0; step < MAX_AGENT_STEPS; step++) {
-    const { message, stopReason } = await provider.stream(
+    const { message, stopReason } = await streamWithRetry(
+      provider,
       // Pruned copy goes to the provider; local history stays full-fidelity.
       { model, system: SYSTEM_PROMPT, messages: pruneForRequest(messages), tools },
-      { signal, onTextDelta: callbacks.onTextDelta },
+      signal,
+      callbacks,
     );
 
     await callbacks.onAssistantMessage(message);
