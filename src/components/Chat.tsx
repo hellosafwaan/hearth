@@ -1,8 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { browser } from '#imports';
 import { runAgent } from '../lib/agent/loop';
-import { APP_NAME } from '../lib/constants';
+import { APP_NAME, buildSystemPrompt } from '../lib/constants';
+import { normalizeSite } from '../lib/tools/executors/utility';
 import { appendMessage, createConversation, getMessages } from '../lib/db/repo';
 import { createProvider, supportsTools, supportsVision } from '../lib/providers';
 import { describeProviderError } from '../lib/providers/errors';
@@ -11,6 +12,7 @@ import { addAutoApproveOrigin, getSettings, type Settings } from '../lib/setting
 import {
   ACTING_TOOLS,
   DEBUGGER_TOOLS,
+  PLAN_MODE_TOOLS,
   SEQUENTIAL_TOOLS,
   toolDefinitions,
 } from '../lib/tools/definitions';
@@ -66,12 +68,33 @@ export function Chat(props: {
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Plan mode: sites granted by an approved propose_plan. Scoped to the
+  // conversation — switching or starting a new chat clears the grants.
+  const grantedSitesRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    grantedSitesRef.current = new Set();
+  }, [conversationId]);
+
+  /** The site an acting tool targets: explicit URL input, else the active tab. */
+  async function targetSite(part: ToolUsePart): Promise<string | null> {
+    if (typeof part.input.url === 'string') {
+      const site = normalizeSite(part.input.url);
+      if (site) return site;
+    }
+    const origin = await getActiveTabOrigin();
+    return origin ? normalizeSite(origin) : null;
+  }
+
   async function requestApproval(part: ToolUsePart): Promise<boolean> {
     const origin = await getActiveTabOrigin();
 
     // Read settings fresh — the prop can be stale mid-run.
     const current = await getSettings();
     if (origin && current.autoApproveOrigins.includes(origin)) return true;
+
+    // An approved plan covers this site for the rest of the conversation.
+    const site = part.name === 'propose_plan' ? null : await targetSite(part);
+    if (current.planMode && site && grantedSitesRef.current.has(site)) return true;
 
     const decision = await new Promise<ApprovalDecision>((resolve) => {
       setPendingApproval({
@@ -84,6 +107,12 @@ export function Chat(props: {
     });
     setPendingApproval(null);
 
+    if (decision.approved && part.name === 'propose_plan' && Array.isArray(part.input.sites)) {
+      for (const raw of part.input.sites) {
+        const granted = typeof raw === 'string' ? normalizeSite(raw) : null;
+        if (granted) grantedSitesRef.current.add(granted);
+      }
+    }
     if (decision.approved && decision.rememberOrigin && origin) {
       await addAutoApproveOrigin(origin);
     }
@@ -115,7 +144,8 @@ export function Chat(props: {
       const available = toolDefinitions.filter(
         (t) =>
           (!import.meta.env.FIREFOX || !DEBUGGER_TOOLS.has(t.name)) &&
-          (supportsVision(settings) || t.name !== 'screenshot'),
+          (supportsVision(settings) || t.name !== 'screenshot') &&
+          (settings.planMode || !PLAN_MODE_TOOLS.has(t.name)),
       );
       const tools = supportsTools(settings) ? available : [];
 
@@ -124,6 +154,7 @@ export function Chat(props: {
         model: settings.model,
         history,
         tools,
+        system: buildSystemPrompt({ planMode: settings.planMode }),
         registry: toolRegistry,
         actingTools: ACTING_TOOLS,
         sequentialTools: SEQUENTIAL_TOOLS,

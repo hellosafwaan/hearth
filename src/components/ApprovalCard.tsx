@@ -49,6 +49,8 @@ export function ApprovalCard(props: { approval: PendingApproval }) {
   const { approval } = props;
   const [remember, setRemember] = useState(false);
 
+  if (approval.name === 'propose_plan') return <PlanCard approval={approval} />;
+
   const action = ACTIONS[approval.name] ?? {
     label: approval.name,
     description: 'Sidekick wants to perform this action.',
@@ -116,6 +118,78 @@ export function ApprovalCard(props: { approval: PendingApproval }) {
           ✕ Deny
         </Button>
       </div>
+    </Card>
+  );
+}
+
+/** One approval for a whole task: the plan's steps + the sites it may act on. */
+function PlanCard(props: { approval: PendingApproval }) {
+  const { approval } = props;
+  const steps = (Array.isArray(approval.input.steps) ? approval.input.steps : []).filter(
+    (s): s is string => typeof s === 'string',
+  );
+  const sites = (Array.isArray(approval.input.sites) ? approval.input.sites : []).filter(
+    (s): s is string => typeof s === 'string',
+  );
+
+  return (
+    <Card overlay className="mx-3 mb-2 space-y-3 p-4">
+      <div>
+        <span className="font-mono text-label-sm tracking-wider text-faint uppercase">
+          Plan approval
+        </span>
+        <h3 className="text-headline font-bold text-text">Approach to follow</h3>
+      </div>
+
+      {steps.length > 0 && (
+        <ol className="space-y-1.5">
+          {steps.map((step, i) => (
+            <li key={i} className="flex gap-2.5 text-body-sm text-text">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-raised font-mono text-label-sm text-faint">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {sites.length > 0 && (
+        <div className="space-y-1">
+          <span className="font-mono text-label-sm text-faint">Allow actions on these sites</span>
+          <div className="flex flex-wrap gap-1.5">
+            {sites.map((site) => (
+              <span
+                key={site}
+                className="rounded-full border border-border bg-surface-raised px-2.5 py-1 font-mono text-label-md text-text"
+              >
+                {site}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Button
+          variant="primary"
+          className="flex-1"
+          onClick={() => approval.resolve({ approved: true, rememberOrigin: false })}
+        >
+          ✓ Approve plan
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={() => approval.resolve({ approved: false, rememberOrigin: false })}
+        >
+          ✕ Deny
+        </Button>
+      </div>
+
+      <p className="text-label-sm text-faint">
+        Actions on the listed sites will run without further approval for this conversation.
+        Anything else still asks.
+      </p>
     </Card>
   );
 }

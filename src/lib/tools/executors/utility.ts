@@ -12,6 +12,36 @@ export async function executeWait(input: Record<string, unknown>): Promise<ToolE
   return text(`Waited ${seconds}s.`);
 }
 
+/** Normalizes "https://www.YouTube.com/x" / "www.youtube.com" → "youtube.com". */
+export function normalizeSite(value: string): string | null {
+  const raw = value.trim().toLowerCase();
+  if (!raw) return null;
+  try {
+    const host = raw.includes('://') ? new URL(raw).hostname : new URL(`https://${raw}`).hostname;
+    return host.replace(/^www\./, '') || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Runs only after the user approved the plan card (propose_plan is in
+ * ACTING_TOOLS) — the site grant itself happens in the approval flow; this
+ * just confirms to the model.
+ */
+export async function executeProposePlan(input: Record<string, unknown>): Promise<ToolExecResult> {
+  const sites = (Array.isArray(input.sites) ? input.sites : [])
+    .map((s) => (typeof s === 'string' ? normalizeSite(s) : null))
+    .filter((s): s is string => !!s);
+  if (sites.length === 0) {
+    return text('propose_plan requires "sites": the hostnames you will act on.', true);
+  }
+  return text(
+    `Plan approved. Actions on ${sites.join(', ')} will run without individual approval for the ` +
+      'rest of this conversation. Proceed with the plan now — do not ask for permission again.',
+  );
+}
+
 export async function executeListTabs(): Promise<ToolExecResult> {
   const tabs = await browser.tabs.query({ currentWindow: true });
   const lines = tabs.map((tab) => {

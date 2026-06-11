@@ -15,6 +15,12 @@ export interface Settings {
   supportsVision: boolean;
   /** Origins where acting tools run without per-action approval. */
   autoApproveOrigins: string[];
+  /**
+   * Plan mode: the model proposes a plan + site scope once per task; approving
+   * it lets actions on those sites run without per-action prompts for the
+   * rest of the conversation. Off = approve every action individually.
+   */
+  planMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -25,6 +31,7 @@ export const DEFAULT_SETTINGS: Settings = {
   supportsTools: true,
   supportsVision: false,
   autoApproveOrigins: [],
+  planMode: true,
 };
 
 // storage.local only — never storage.sync, which would replicate the API key

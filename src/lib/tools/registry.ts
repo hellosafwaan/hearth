@@ -18,7 +18,7 @@ import {
   executeReloadAndCapture,
 } from './executors/devtools';
 import { executeScreenshot } from './executors/screenshot';
-import { executeListTabs, executeWait } from './executors/utility';
+import { executeListTabs, executeProposePlan, executeWait } from './executors/utility';
 import { withRetry } from './retry';
 
 export interface ToolExecResult {
@@ -51,6 +51,7 @@ const executors: Record<string, ToolExecutor> = {
   reload_and_capture: executeReloadAndCapture,
   enable_deep_inspection: executeEnableDeepInspection,
   get_response_body: executeGetResponseBody,
+  propose_plan: executeProposePlan,
 };
 
 // Every tool gets one automatic retry on transient failures (content script

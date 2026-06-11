@@ -322,6 +322,20 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
         </Section>
       )}
 
+      <Section title="Behavior">
+        <Card className="p-4">
+          <Toggle
+            checked={draft.planMode}
+            onChange={(planMode) => update({ planMode })}
+            label="Plan mode"
+            description="One approval per task: the model proposes a plan + sites, then acts freely on them"
+          />
+        </Card>
+        <p className="text-label-sm text-faint">
+          Off: every individual action (click, fill, navigate) asks for approval. Remember to Save.
+        </p>
+      </Section>
+
       <Section title="Permissions">
         <PermissionRow
           label="Page access"

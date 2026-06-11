@@ -12,7 +12,13 @@ export const ACTING_TOOLS: ReadonlySet<string> = new Set([
   'open_tab',
   'reload_and_capture',
   'enable_deep_inspection',
+  // The plan itself goes through the approval gate — approving it is what
+  // grants the site scope.
+  'propose_plan',
 ]);
+
+/** Only offered when plan mode is enabled in settings. */
+export const PLAN_MODE_TOOLS: ReadonlySet<string> = new Set(['propose_plan']);
 
 /** Tier 2 tools that need chrome.debugger — filtered out on Firefox. */
 export const DEBUGGER_TOOLS: ReadonlySet<string> = new Set([
@@ -277,6 +283,30 @@ export const toolDefinitions: ToolDefinition[] = [
       '(e.g. the user needs to see what an API returned). Requires user approval and the debugger ' +
       'permission; Chrome shows a banner while active. Detaches when the tab closes.',
     inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'propose_plan',
+    description:
+      'Propose a plan for a task that needs page actions (clicking, filling, navigating). Provide ' +
+      '2–5 concise steps and the sites you will act on. One user approval covers all listed sites ' +
+      'for the rest of the conversation — actions there will not ask again. Call this before your ' +
+      'first acting tool in a multi-step task; skip it for single trivial actions.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        steps: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Short imperative steps, e.g. "Read the video page".',
+        },
+        sites: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Hostnames you will act on, e.g. ["youtube.com"].',
+        },
+      },
+      required: ['steps', 'sites'],
+    },
   },
   {
     name: 'get_response_body',

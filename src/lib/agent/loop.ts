@@ -35,6 +35,8 @@ export interface AgentOptions {
   model: string;
   history: ChatMessage[];
   tools: ToolDefinition[];
+  /** Overrides the default SYSTEM_PROMPT (e.g. plan-mode variant). */
+  system?: string;
   registry: Record<string, ToolExecutor>;
   /** Names of tools that must pass requestApproval before executing. */
   actingTools?: ReadonlySet<string>;
@@ -129,7 +131,12 @@ export async function runAgent(options: AgentOptions): Promise<void> {
     const { message, stopReason } = await streamWithRetry(
       provider,
       // Pruned copy goes to the provider; local history stays full-fidelity.
-      { model, system: SYSTEM_PROMPT, messages: pruneForRequest(messages), tools },
+      {
+        model,
+        system: options.system ?? SYSTEM_PROMPT,
+        messages: pruneForRequest(messages),
+        tools,
+      },
       signal,
       callbacks,
     );
