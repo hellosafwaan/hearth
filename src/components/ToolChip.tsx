@@ -1,6 +1,6 @@
 import { Chip, Spinner } from './ui';
 
-const TOOL_LABELS: Record<string, string> = {
+export const TOOL_LABELS: Record<string, string> = {
   screenshot: 'Screenshot',
   read_page: 'Read page',
   get_selected_text: 'Selection',

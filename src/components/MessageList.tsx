@@ -1,10 +1,83 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { MessageRow } from '../lib/db/schema';
-import type { MessagePart } from '../lib/providers/types';
+import type { ToolResultPart } from '../lib/providers/types';
+import { ActivityTimeline, type TimelineStep } from './ActivityTimeline';
 import type { LiveState } from './Chat';
-import { ToolChip } from './ToolChip';
-import { Banner, Spinner } from './ui';
+import { Spinner } from './ui';
+
+// The transcript renders as: user bubbles, assistant prose, and — for every
+// stretch of tool work between a user message and the final answer — one
+// collapsible ActivityTimeline instead of loose chips.
+
+type Item =
+  | { kind: 'user'; key: string; text: string }
+  | { kind: 'assistant'; key: string; text: string }
+  | { kind: 'image'; key: string; mediaType: string; data: string }
+  | { kind: 'activity'; key: string; steps: TimelineStep[] };
+
+function buildItems(messages: MessageRow[], running: boolean): Item[] {
+  // Results first, so actions know their status no matter the message order.
+  const results = new Map<string, ToolResultPart>();
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.type === 'tool_result') results.set(part.toolUseId, part);
+    }
+  }
+
+  const items: Item[] = [];
+  let activity: { steps: TimelineStep[] } | null = null;
+
+  for (const message of messages) {
+    message.parts.forEach((part, index) => {
+      const key = `${message.id}-${index}`;
+      switch (part.type) {
+        case 'text':
+          // Loop-injected notes ride on tool messages — not user prose.
+          if (message.role === 'user' && part.text.startsWith('[system note]')) return;
+          if (message.role === 'user') {
+            activity = null; // a new user message starts a new turn
+            items.push({ kind: 'user', key, text: part.text });
+          } else {
+            items.push({ kind: 'assistant', key, text: part.text });
+          }
+          break;
+        case 'image':
+          items.push({ kind: 'image', key, mediaType: part.mediaType, data: part.data });
+          break;
+        case 'tool_result':
+          break; // surfaced through the matching action's status
+        case 'tool_use': {
+          if (!activity) {
+            activity = { steps: [] };
+            items.push({ kind: 'activity', key: `activity-${key}`, steps: activity.steps });
+          }
+          // All tool_use parts of one assistant message form one step (batch).
+          if (index === message.parts.findIndex((p) => p.type === 'tool_use')) {
+            activity.steps.push({ actions: [] });
+          }
+          const result = results.get(part.id);
+          const image = result?.content.find((c) => c.type === 'image');
+          activity.steps[activity.steps.length - 1].actions.push({
+            id: part.id,
+            name: part.name,
+            input: part.input,
+            status: result ? (result.isError ? 'error' : 'ok') : running ? 'running' : 'skipped',
+            errorText: result?.isError
+              ? result.content
+                  .filter((c) => c.type === 'text')
+                  .map((c) => c.text)
+                  .join('\n')
+              : undefined,
+            image: image?.type === 'image' ? { mediaType: image.mediaType, data: image.data } : undefined,
+          });
+          break;
+        }
+      }
+    });
+  }
+  return items;
+}
 
 export function MessageList(props: {
   messages: MessageRow[];
@@ -34,6 +107,9 @@ export function MessageList(props: {
     bottomRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }
 
+  const items = buildItems(messages, running);
+  const lastActivityKey = [...items].reverse().find((i) => i.kind === 'activity')?.key;
+
   return (
     <div className="relative min-h-0 flex-1">
       <div
@@ -41,20 +117,45 @@ export function MessageList(props: {
         onScroll={onScroll}
         className="h-full space-y-3 overflow-y-auto px-3 py-3"
       >
-        {messages.map((message) => (
-          <Message key={message.id} role={message.role} parts={message.parts} />
-        ))}
+        {items.map((item) => {
+          switch (item.kind) {
+            case 'user':
+              return (
+                <div key={item.key} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-bubble px-4 py-2.5 text-body-md whitespace-pre-wrap text-bubble-fg shadow-paper">
+                    {item.text}
+                  </div>
+                </div>
+              );
+            case 'assistant':
+              return (
+                <div key={item.key} className="markdown max-w-full">
+                  <ReactMarkdown>{item.text}</ReactMarkdown>
+                </div>
+              );
+            case 'image':
+              return (
+                <img
+                  key={item.key}
+                  src={`data:${item.mediaType};base64,${item.data}`}
+                  alt="attachment"
+                  className="max-h-40 rounded-md border border-border"
+                />
+              );
+            case 'activity':
+              return (
+                <ActivityTimeline
+                  key={item.key}
+                  steps={item.steps}
+                  live={running && item.key === lastActivityKey}
+                />
+              );
+          }
+        })}
 
         {live.streamText && (
           <div className="markdown max-w-full">
             <ReactMarkdown>{live.streamText}</ReactMarkdown>
-          </div>
-        )}
-        {running && live.toolNames.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {live.toolNames.map((name, i) => (
-              <ToolChip key={`${name}-${i}`} name={name} pending />
-            ))}
           </div>
         )}
         {running && live.notice && (
@@ -84,68 +185,4 @@ export function MessageList(props: {
       )}
     </div>
   );
-}
-
-function Message(props: { role: 'user' | 'assistant'; parts: MessagePart[] }) {
-  const { role, parts } = props;
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        switch (part.type) {
-          case 'text':
-            return role === 'user' ? (
-              <div key={i} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl rounded-tr-md bg-bubble px-4 py-2.5 text-body-md whitespace-pre-wrap text-bubble-fg shadow-paper">
-                  {part.text}
-                </div>
-              </div>
-            ) : (
-              <div key={i} className="markdown max-w-full">
-                <ReactMarkdown>{part.text}</ReactMarkdown>
-              </div>
-            );
-          case 'tool_use':
-            return <ToolChip key={i} name={part.name} />;
-          case 'tool_result':
-            return <ToolResult key={i} part={part} />;
-          case 'image':
-            return (
-              <img
-                key={i}
-                src={`data:${part.mediaType};base64,${part.data}`}
-                alt="attachment"
-                className="max-h-40 rounded-md border border-border"
-              />
-            );
-        }
-      })}
-    </>
-  );
-}
-
-function ToolResult(props: { part: Extract<MessagePart, { type: 'tool_result' }> }) {
-  const { part } = props;
-  const image = part.content.find((c) => c.type === 'image');
-  const text = part.content.find((c) => c.type === 'text');
-
-  if (part.isError) {
-    return (
-      <Banner tone="caution" className="text-label-md">
-        {text?.type === 'text' ? text.text : `${part.toolName} failed`}
-      </Banner>
-    );
-  }
-
-  if (image?.type === 'image') {
-    return (
-      <img
-        src={`data:${image.mediaType};base64,${image.data}`}
-        alt={`${part.toolName} result`}
-        className="max-h-32 w-auto rounded-md border border-border opacity-90"
-      />
-    );
-  }
-
-  return null;
 }
