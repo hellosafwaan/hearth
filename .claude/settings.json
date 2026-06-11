@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm compile)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm build)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm zip)",
+      "Bash(pnpm zip:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)"
+    ]
+  }
+}
