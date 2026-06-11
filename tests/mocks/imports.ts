@@ -20,6 +20,9 @@ export const browser = {
     request: vi.fn(),
     remove: vi.fn(),
   },
+  history: {
+    search: vi.fn(),
+  },
   runtime: {
     sendMessage: vi.fn(),
     onMessage: { addListener: vi.fn() },

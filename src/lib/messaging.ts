@@ -81,17 +81,16 @@ function withTimeout<T>(promise: Promise<T>): Promise<T> {
 }
 
 /**
- * Sends a request to the content script in the active tab. If the content
+ * Sends a request to the content script in a specific tab. If the content
  * script isn't there (tab opened before the extension loaded), injects it
  * once and retries.
  */
-export async function sendToActiveTab<T extends ContentRequest>(
+export async function sendToTab<T extends ContentRequest>(
+  tabId: number,
   request: T,
 ): Promise<ContentResponse<T['type']>> {
-  const tab = await getActiveTab();
-
   try {
-    return await withTimeout(browser.tabs.sendMessage(tab.id!, request));
+    return await withTimeout(browser.tabs.sendMessage(tabId, request));
   } catch {
     // Content script not present — try injecting it, then retry.
   }
@@ -99,10 +98,10 @@ export async function sendToActiveTab<T extends ContentRequest>(
   try {
     const scripting = (browser as any).scripting;
     await scripting.executeScript({
-      target: { tabId: tab.id! },
+      target: { tabId },
       files: ['content-scripts/content.js'],
     });
-    return await withTimeout(browser.tabs.sendMessage(tab.id!, request));
+    return await withTimeout(browser.tabs.sendMessage(tabId, request));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const granted = await browser.permissions
@@ -117,4 +116,12 @@ export async function sendToActiveTab<T extends ContentRequest>(
           'in the sidebar, then try again.',
     };
   }
+}
+
+/** sendToTab against the currently active tab. */
+export async function sendToActiveTab<T extends ContentRequest>(
+  request: T,
+): Promise<ContentResponse<T['type']>> {
+  const tab = await getActiveTab();
+  return sendToTab(tab.id!, request);
 }

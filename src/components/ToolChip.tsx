@@ -22,6 +22,7 @@ export const TOOL_LABELS: Record<string, string> = {
   enable_deep_inspection: 'Deep inspection',
   get_response_body: 'Response body',
   propose_plan: 'Plan',
+  search_history: 'History',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

@@ -188,6 +188,38 @@ body {
   @apply border-border-strong text-muted border-l-2 pl-3;
 }
 
+/* Syntax highlighting (rehype-highlight) themed with the design tokens —
+   slate for structure, amber for literals, faint for noise. */
+.markdown .hljs-keyword,
+.markdown .hljs-built_in,
+.markdown .hljs-type,
+.markdown .hljs-tag,
+.markdown .hljs-name {
+  color: var(--sk-accent-strong);
+}
+
+.markdown .hljs-string,
+.markdown .hljs-number,
+.markdown .hljs-literal,
+.markdown .hljs-regexp,
+.markdown .hljs-attr {
+  color: var(--sk-caution);
+}
+
+.markdown .hljs-comment,
+.markdown .hljs-quote,
+.markdown .hljs-meta {
+  color: var(--sk-text-faint);
+  font-style: italic;
+}
+
+.markdown .hljs-title,
+.markdown .hljs-function,
+.markdown .hljs-section {
+  color: var(--sk-text);
+  font-weight: 500;
+}
+
 .markdown table {
   @apply block max-w-full overflow-x-auto text-body-sm;
 }

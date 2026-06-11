@@ -55,6 +55,11 @@ export const toolDefinitions: ToolDefinition[] = [
           description:
             'Full mode only: character offset to continue reading from (use the value suggested by the previous result).',
         },
+        tab_id: {
+          type: 'integer',
+          description:
+            'Read a specific tab instead of the active one — ids come from list_tabs. Useful for comparing tabs.',
+        },
       },
     },
   },
@@ -208,8 +213,9 @@ export const toolDefinitions: ToolDefinition[] = [
   {
     name: 'list_tabs',
     description:
-      "List the open tabs in the user's current browser window (title, URL, which is active). Use when the " +
-      'user refers to their other tabs. Read-only — switching or closing tabs is not available.',
+      "List the open tabs in the user's current browser window (id, title, URL, which is active). Use when " +
+      'the user refers to their other tabs; pass a returned id to read_page tab_id to read another tab ' +
+      '(e.g. comparing two pages). Read-only — switching or closing tabs is not available.',
     inputSchema: { type: 'object', properties: {} },
   },
   {
@@ -283,6 +289,27 @@ export const toolDefinitions: ToolDefinition[] = [
       '(e.g. the user needs to see what an API returned). Requires user approval and the debugger ' +
       'permission; Chrome shows a banner while active. Detaches when the tab closes.',
     inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'search_history',
+    description:
+      "Search the user's browser history for pages they visited before. Use when the user asks to " +
+      'find something they read or visited ("that article about transformers from last week"). The ' +
+      'search runs on their device; only matching titles and URLs enter the conversation. Requires ' +
+      "the History permission (Settings → Permissions). Results are the user's private data — " +
+      'never volunteer them unasked.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description:
+            'Keywords to search titles and URLs for. Omit or leave empty to list recent history.',
+        },
+        days: { type: 'integer', description: 'How far back to search (default 30, max 365).' },
+        limit: { type: 'integer', description: 'Max results (default 20, max 50).' },
+      },
+    },
   },
   {
     name: 'propose_plan',

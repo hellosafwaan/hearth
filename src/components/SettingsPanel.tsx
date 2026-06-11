@@ -5,11 +5,14 @@ import { formatDebugLog } from '../lib/debug-log';
 import { exportAllData, importData } from '../lib/db/export';
 import {
   hasDebuggerPermission,
+  hasHistoryPermission,
   hasPageAccess,
   requestDebuggerPermission,
+  requestHistoryPermission,
   requestPageAccess,
   requestServerAccess,
   revokeDebuggerPermission,
+  revokeHistoryPermission,
   revokePageAccess,
   watchPermissions,
 } from '../lib/permissions';
@@ -43,6 +46,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [dataStatus, setDataStatus] = useState<string | null>(null);
   const [pageAccess, setPageAccess] = useState<boolean | null>(null);
   const [debuggerAccess, setDebuggerAccess] = useState<boolean | null>(null);
+  const [historyAccess, setHistoryAccess] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocal = draft.provider === 'openai-compatible';
@@ -51,6 +55,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   useEffect(() => {
     const refresh = () => {
       hasPageAccess().then(setPageAccess);
+      hasHistoryPermission().then(setHistoryAccess);
       if (!import.meta.env.FIREFOX) hasDebuggerPermission().then(setDebuggerAccess);
     };
     refresh();
@@ -341,6 +346,21 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
           onGrant={() => requestPageAccess()}
           onRevoke={() => revokePageAccess()}
         />
+        <PermissionRow
+          label="History search"
+          status={
+            historyAccess
+              ? 'Granted — can search your history when asked'
+              : 'Not granted — "find that article" won\'t work'
+          }
+          granted={!!historyAccess}
+          onGrant={() => requestHistoryPermission()}
+          onRevoke={() => revokeHistoryPermission()}
+        />
+        <p className="text-label-sm text-faint">
+          Searches run on this device. Only matching titles and URLs are shared with the model,
+          and only when you ask.
+        </p>
         {!import.meta.env.FIREFOX && (
           <>
             <PermissionRow

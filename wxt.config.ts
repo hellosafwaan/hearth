@@ -16,12 +16,12 @@ export default defineConfig({
     // install prompt stays clean. Chrome MV3 and Firefox MV2 use different
     // manifest keys for optional origins.
     ...(browser === 'firefox'
-      ? { optional_permissions: ['<all_urls>'] }
+      ? { optional_permissions: ['<all_urls>', 'history'] }
       : {
           optional_host_permissions: ['<all_urls>'],
-          // Deep inspection (full network bodies + console via CDP) is an
-          // explicit opt-in; Firefox has no debugger API for extensions.
-          optional_permissions: ['debugger'],
+          // Deep inspection (debugger) and history search are explicit
+          // opt-ins; Firefox has no debugger API for extensions.
+          optional_permissions: ['debugger', 'history'],
         }),
     action: {
       default_title: 'Sidekick',

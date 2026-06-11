@@ -65,6 +65,20 @@ export function revokeDebuggerPermission(): Promise<boolean> {
   return browser.permissions.remove({ permissions: ['debugger'] }).catch(() => false);
 }
 
+/** History search — explicit opt-in; searches run locally. */
+export function hasHistoryPermission(): Promise<boolean> {
+  return browser.permissions.contains({ permissions: ['history'] }).catch(() => false);
+}
+
+/** Must be called from a user gesture (button click). */
+export function requestHistoryPermission(): Promise<boolean> {
+  return browser.permissions.request({ permissions: ['history'] }).catch(() => false);
+}
+
+export function revokeHistoryPermission(): Promise<boolean> {
+  return browser.permissions.remove({ permissions: ['history'] }).catch(() => false);
+}
+
 export function watchPermissions(callback: () => void): () => void {
   const api = browser.permissions as any;
   api.onAdded?.addListener(callback);

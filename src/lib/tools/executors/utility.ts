@@ -35,7 +35,10 @@ export async function executeListTabs(): Promise<ToolExecResult> {
   const tabs = await browser.tabs.query({ currentWindow: true });
   const lines = tabs.map((tab) => {
     const marker = tab.active ? ' (active)' : '';
-    return `- "${(tab.title ?? 'Untitled').slice(0, 80)}"${marker} — ${tab.url ?? 'about:blank'}`;
+    return `- [id:${tab.id}] "${(tab.title ?? 'Untitled').slice(0, 80)}"${marker} — ${tab.url ?? 'about:blank'}`;
   });
-  return text(`Open tabs in this window (${tabs.length}):\n${lines.join('\n')}`);
+  return text(
+    `Open tabs in this window (${tabs.length}):\n${lines.join('\n')}\n` +
+      'Use read_page with tab_id to read a non-active tab.',
+  );
 }

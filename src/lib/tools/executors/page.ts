@@ -1,4 +1,4 @@
-import { sendToActiveTab } from '../../messaging';
+import { sendToActiveTab, sendToTab, type ContentRequest } from '../../messaging';
 import type { ToolExecResult } from '../registry';
 
 function errorResult(error: string): ToolExecResult {
@@ -8,8 +8,14 @@ function errorResult(error: string): ToolExecResult {
 export async function executeReadPage(input: Record<string, unknown>): Promise<ToolExecResult> {
   const mode = input.mode === 'full' ? 'full' : 'article';
   const offset = typeof input.offset === 'number' && input.offset > 0 ? input.offset : 0;
+  const tabId = typeof input.tab_id === 'number' ? input.tab_id : null;
 
-  const response = await sendToActiveTab({ type: 'read_page', mode, offset });
+  const request: Extract<ContentRequest, { type: 'read_page' }> = {
+    type: 'read_page',
+    mode,
+    offset,
+  };
+  const response = tabId != null ? await sendToTab(tabId, request) : await sendToActiveTab(request);
   if (!response.ok) return errorResult(response.error);
 
   const data = response.data;
