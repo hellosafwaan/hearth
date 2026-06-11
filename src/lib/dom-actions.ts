@@ -115,10 +115,12 @@ const OUTER_HTML_MAX = 4000;
 
 function trimmedOuterHtml(el: Element): string {
   const clone = el.cloneNode(true) as Element;
-  clone.querySelectorAll('script, style, svg path').forEach((child) => child.remove());
+  clone.querySelectorAll('script, style, svg path').forEach((child) => {
+    child.remove();
+  });
   const html = clone.outerHTML.replace(/\s+/g, ' ').replace(/> </g, '>\n<');
   return html.length > OUTER_HTML_MAX
-    ? html.slice(0, OUTER_HTML_MAX) + '\n… [truncated]'
+    ? `${html.slice(0, OUTER_HTML_MAX)}\n… [truncated]`
     : html;
 }
 

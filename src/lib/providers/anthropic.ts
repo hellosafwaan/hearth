@@ -27,9 +27,8 @@ function normalizeError(error: unknown): never {
   throw error;
 }
 
-function toAnthropicContent(parts: MessagePart[]): Anthropic.ContentBlockParam[] {
-  return parts.map((part): Anthropic.ContentBlockParam => {
-    switch (part.type) {
+function toAnthropicBlock(part: MessagePart): Anthropic.ContentBlockParam {
+  switch (part.type) {
       case 'text':
         return { type: 'text', text: part.text };
       case 'image':
@@ -61,8 +60,11 @@ function toAnthropicContent(parts: MessagePart[]): Anthropic.ContentBlockParam[]
                 },
           ),
         };
-    }
-  });
+  }
+}
+
+function toAnthropicContent(parts: MessagePart[]): Anthropic.ContentBlockParam[] {
+  return parts.map(toAnthropicBlock);
 }
 
 function fromAnthropicMessage(message: Anthropic.Message): ChatMessage {

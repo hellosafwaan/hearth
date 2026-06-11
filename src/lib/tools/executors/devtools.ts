@@ -8,7 +8,7 @@ import type {
   DebuggerResponse,
   NetworkEntry,
 } from '../../devtools/protocol';
-import { sendToActiveTab } from '../../messaging';
+import { getActiveTab, sendToActiveTab } from '../../messaging';
 import type { ToolExecResult } from '../registry';
 
 /** Sends a Tier 2 message to the background-owned debugger session. */
@@ -37,9 +37,7 @@ function textResult(text: string): ToolExecResult {
 }
 
 async function getActiveTabId(): Promise<number> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) throw new Error('No active tab found.');
-  return tab.id;
+  return (await getActiveTab()).id!;
 }
 
 /** Injects the MAIN-world capture script into the active tab (idempotent). */
@@ -69,7 +67,7 @@ const JUST_ARMED_NOTE =
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  return d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0').slice(0, 1);
+  return `${d.toTimeString().slice(0, 8)}.${String(d.getMilliseconds()).padStart(3, '0').slice(0, 1)}`;
 }
 
 function formatConsole(entries: ConsoleEntry[]): string {

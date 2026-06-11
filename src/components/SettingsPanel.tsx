@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { APP_NAME, DEFAULT_MODEL, GEMINI_MODELS, MODELS } from '../lib/constants';
+import { APP_NAME, GEMINI_MODELS, MODELS } from '../lib/constants';
+import { modelForProvider } from '../lib/providers/models';
+import { formatDebugLog } from '../lib/debug-log';
 import { exportAllData, importData } from '../lib/db/export';
 import {
   hasDebuggerPermission,
@@ -27,22 +29,6 @@ const BASE_URL_PRESETS = [
   { label: 'LM Studio', url: 'http://localhost:1234/v1' },
   { label: 'Ollama', url: 'http://localhost:11434/v1' },
 ];
-
-/**
- * A model id only makes sense for the provider it belongs to — carrying
- * "qwen/qwen3-4b" into the Anthropic dropdown silently 404s. Keep the current
- * model only when the target provider actually offers it.
- */
-function modelForProvider(provider: ProviderKind, current: string): string {
-  switch (provider) {
-    case 'anthropic':
-      return MODELS.some((m) => m.id === current) ? current : DEFAULT_MODEL;
-    case 'gemini':
-      return GEMINI_MODELS.some((m) => m.id === current) ? current : GEMINI_MODELS[1].id;
-    case 'openai-compatible':
-      return current;
-  }
-}
 
 export function SettingsPanel(props: { settings: Settings; onDone?: () => void }) {
   // Heal any provider/model mismatch already saved (pre-fix versions allowed it).
@@ -130,6 +116,17 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
     } catch (err) {
       setDataStatus(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  function exportDebugLog() {
+    const blob = new Blob([formatDebugLog()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${APP_NAME.toLowerCase()}-debug-${new Date().toISOString().slice(0, 19)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDataStatus('Debug log exported (events from this panel session only).');
   }
 
   async function importChats(file: File) {
@@ -391,6 +388,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
         <div className="flex items-center gap-2">
           <Button onClick={exportChats}>Export JSON</Button>
           <Button onClick={() => fileInputRef.current?.click()}>Import JSON</Button>
+          <Button onClick={exportDebugLog}>Debug log</Button>
           <input
             ref={fileInputRef}
             type="file"

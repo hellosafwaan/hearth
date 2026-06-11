@@ -110,7 +110,7 @@ async function handleAsync(request: ContentRequest): Promise<ContentResponse> {
       kind: 'console',
       filter: { level: request.level, limit: request.limit },
     });
-    if (!payload || payload.kind !== 'console') return { ok: true, data: { armed: false } };
+    if (payload?.kind !== 'console') return { ok: true, data: { armed: false } };
     return { ok: true, data: { armed: true, ...payload } };
   }
 
@@ -124,7 +124,7 @@ async function handleAsync(request: ContentRequest): Promise<ContentResponse> {
       limit: request.limit,
     },
   });
-  if (!payload || payload.kind !== 'network') return { ok: true, data: { armed: false } };
+  if (payload?.kind !== 'network') return { ok: true, data: { armed: false } };
   return { ok: true, data: { armed: true, ...payload } };
 }
 

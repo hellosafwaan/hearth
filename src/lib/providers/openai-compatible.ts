@@ -1,4 +1,5 @@
 import { ProviderError } from './errors';
+import { sseData } from './sse';
 import type {
   ChatMessage,
   ChatRequest,
@@ -45,7 +46,10 @@ function toDataUrl(part: { mediaType: string; data: string }): string {
  * only contain text — images from tool results (screenshots) are re-attached
  * as a follow-up user message.
  */
-function toOpenAIMessages(system: string | undefined, messages: ChatMessage[]): OpenAIMessage[] {
+export function toOpenAIMessages(
+  system: string | undefined,
+  messages: ChatMessage[],
+): OpenAIMessage[] {
   const out: OpenAIMessage[] = [];
   if (system) out.push({ role: 'system', content: system });
 
@@ -117,30 +121,6 @@ function mapFinishReason(reason: string | null | undefined): StopReason {
       return 'max_tokens';
     default:
       return 'other';
-  }
-}
-
-async function* sseData(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let index: number;
-      while ((index = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, index).trim();
-        buffer = buffer.slice(index + 1);
-        if (line.startsWith('data:')) {
-          const data = line.slice(5).trim();
-          if (data && data !== '[DONE]') yield data;
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
   }
 }
 

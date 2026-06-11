@@ -59,7 +59,7 @@ export type ContentResponse<T extends ContentRequest['type'] = ContentRequest['t
   | { ok: true; data: ContentResponseData[T] }
   | { ok: false; error: string };
 
-async function getActiveTab() {
+export async function getActiveTab() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) throw new Error('No active tab found.');
   return tab;

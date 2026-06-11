@@ -150,6 +150,8 @@ export function MessageList(props: {
                   live={running && item.key === lastActivityKey}
                 />
               );
+            default:
+              return null;
           }
         })}
 

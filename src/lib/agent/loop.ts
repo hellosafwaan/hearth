@@ -1,4 +1,5 @@
 import { MAX_AGENT_STEPS, SYSTEM_PROMPT } from '../constants';
+import { logEvent } from '../debug-log';
 import { pruneForRequest } from './prune';
 import { isRetryableProviderError } from '../providers/errors';
 import type {
@@ -95,6 +96,11 @@ async function streamWithRetry(
         },
       });
     } catch (error) {
+      const status = (error as { status?: number }).status;
+      logEvent(
+        'provider',
+        `stream failed${status ? ` (${status})` : ''}: ${error instanceof Error ? error.message.slice(0, 200) : error}`,
+      );
       const retryable =
         !streamed && attempt < STREAM_RETRIES && isRetryableProviderError(error);
       if (!retryable) throw error;
@@ -103,8 +109,8 @@ async function streamWithRetry(
         (error as { retryAfterMs?: number }).retryAfterMs ?? RETRY_BACKOFF_MS[attempt],
         MAX_RETRY_WAIT_MS,
       );
-      const label =
-        (error as { status?: number }).status === 429 ? 'Rate limited' : 'Provider overloaded';
+      const label = status === 429 ? 'Rate limited' : 'Provider overloaded';
+      logEvent('retry', `${label}; waiting ${wait}ms (attempt ${attempt + 1}/${STREAM_RETRIES})`);
 
       // Live countdown: re-publish the notice every second until the deadline.
       const deadline = Date.now() + wait;
@@ -153,6 +159,7 @@ export async function runAgent(options: AgentOptions): Promise<void> {
 
     const execute = async (toolUse: ToolUsePart): Promise<ToolResultPart> => {
       callbacks.onToolStart(toolUse);
+      const started = Date.now();
       const executor = registry[toolUse.name];
       const result = executor
         ? await executor(toolUse.input)
@@ -160,6 +167,10 @@ export async function runAgent(options: AgentOptions): Promise<void> {
             content: [{ type: 'text' as const, text: `Unknown tool: ${toolUse.name}` }],
             isError: true,
           };
+      logEvent(
+        'tool',
+        `${toolUse.name} ${result.isError ? 'failed' : 'ok'} in ${Date.now() - started}ms`,
+      );
       return {
         type: 'tool_result',
         toolUseId: toolUse.id,

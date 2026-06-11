@@ -1,4 +1,5 @@
 import { browser } from '#imports';
+import { normalizeSite } from '../../sites';
 import type { ToolExecResult } from '../registry';
 
 function text(value: string, isError = false): ToolExecResult {
@@ -10,18 +11,6 @@ export async function executeWait(input: Record<string, unknown>): Promise<ToolE
   const seconds = Math.min(10, Math.max(0.5, Number.isFinite(requested) ? requested : 2));
   await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
   return text(`Waited ${seconds}s.`);
-}
-
-/** Normalizes "https://www.YouTube.com/x" / "www.youtube.com" → "youtube.com". */
-export function normalizeSite(value: string): string | null {
-  const raw = value.trim().toLowerCase();
-  if (!raw) return null;
-  try {
-    const host = raw.includes('://') ? new URL(raw).hostname : new URL(`https://${raw}`).hostname;
-    return host.replace(/^www\./, '') || null;
-  } catch {
-    return null;
-  }
 }
 
 /**

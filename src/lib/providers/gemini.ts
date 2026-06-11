@@ -1,4 +1,5 @@
 import { ProviderError } from './errors';
+import { sseData } from './sse';
 import type {
   ChatMessage,
   ChatRequest,
@@ -9,7 +10,6 @@ import type {
   StreamOptions,
   StreamResult,
   TextPart,
-  ToolUsePart,
 } from './types';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
@@ -35,7 +35,7 @@ interface GeminiFunctionDeclaration {
 
 // --- Message mapping ---
 
-function toGeminiContents(messages: ChatMessage[]): GeminiContent[] {
+export function toGeminiContents(messages: ChatMessage[]): GeminiContent[] {
   const out: GeminiContent[] = [];
 
   for (const message of messages) {
@@ -104,32 +104,6 @@ function mapFinishReason(reason: string | undefined): StopReason {
       return 'max_tokens';
     default:
       return 'other';
-  }
-}
-
-// --- SSE streaming (same pattern as openai-compatible) ---
-
-async function* sseData(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let index: number;
-      while ((index = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, index).trim();
-        buffer = buffer.slice(index + 1);
-        if (line.startsWith('data:')) {
-          const data = line.slice(5).trim();
-          if (data) yield data;
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
   }
 }
 
