@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { MessageRow } from '../lib/db/schema';
 import type { ToolResultPart } from '../lib/providers/types';
 import { ActivityTimeline, type TimelineStep } from './ActivityTimeline';
@@ -130,7 +131,7 @@ export function MessageList(props: {
             case 'assistant':
               return (
                 <div key={item.key} className="markdown max-w-full">
-                  <ReactMarkdown>{item.text}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.text}</ReactMarkdown>
                 </div>
               );
             case 'image':
@@ -157,7 +158,7 @@ export function MessageList(props: {
 
         {live.streamText && (
           <div className="markdown max-w-full">
-            <ReactMarkdown>{live.streamText}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{live.streamText}</ReactMarkdown>
           </div>
         )}
         {running && live.notice && (
