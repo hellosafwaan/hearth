@@ -219,7 +219,7 @@ export async function executeInspectElement(input: Record<string, unknown>): Pro
   return textResult(response.data.report);
 }
 
-const CAPTURE_SCRIPT_ID = 'sidekick-capture';
+const CAPTURE_SCRIPT_ID = 'hearth-capture';
 
 export async function executeReloadAndCapture(): Promise<ToolExecResult> {
   const tabId = await getActiveTabId();

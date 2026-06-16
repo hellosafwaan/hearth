@@ -49,7 +49,7 @@ export function Composer(props: {
             }
           }}
           rows={1}
-          placeholder="Ask Sidekick…"
+          placeholder="Ask Hearth…"
           className="max-h-32 flex-1 resize-none border-none bg-transparent px-2.5 py-2 text-body-md text-text placeholder-faint outline-none"
         />
         {running ? (

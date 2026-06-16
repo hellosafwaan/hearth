@@ -170,7 +170,7 @@ export default defineContentScript({
   main() {
     // The bridge may inject this file into tabs that already have it
     // (static registration + executeScript fallback) — register once.
-    const flag = '__sidekick_content_loaded__';
+    const flag = '__hearth_content_loaded__';
     if ((window as any)[flag]) return;
     (window as any)[flag] = true;
 

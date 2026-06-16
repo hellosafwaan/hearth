@@ -1,4 +1,4 @@
-# Sidekick
+# Hearth
 
 Privacy-first, BYOK AI assistant that lives in your browser sidebar. No backend
 server — your API key and chat history never leave your device.
@@ -22,7 +22,7 @@ server — your API key and chat history never leave your device.
   framework/CMS/analytics fingerprinting with evidence), `get_page_metadata`,
   `find_in_page` (scroll-to + highlight), `scroll`, `wait`, `list_tabs`
 - **Highlight and ask** — select text on any page → right-click →
-  "Ask Sidekick about…" → sidebar opens with the quote pre-filled
+  "Ask Hearth about…" → sidebar opens with the quote pre-filled
 - **Acting tools with human approval** — `get_interactive_elements` (numbered
   element snapshot), `click_element` / `fill_form` by index, `navigate_to`,
   `open_tab`. Every state-changing action pauses for Approve/Deny in the

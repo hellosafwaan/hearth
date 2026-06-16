@@ -1,4 +1,4 @@
-// Sidekick UI primitives. Feature components compose these and the semantic
+// Hearth UI primitives. Feature components compose these and the semantic
 // tokens in sidepanel/style.css — they should not hand-roll surface, border,
 // or palette classes (raw zinc-*/emerald-* in a feature component is drift).
 export { Banner, type BannerTone } from './Banner';

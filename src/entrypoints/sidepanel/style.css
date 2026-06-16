@@ -22,7 +22,7 @@
 
 /* ---------------------------------------------------------------------------
  * Design tokens — "Tactile Minimalism" from the Stitch screens
- * (design/stitch/sidekick-*-paper.html). Warm paper surfaces, slate primary,
+ * (design/stitch/hearth-*-paper.html). Warm paper surfaces, slate primary,
  * soft shadows, generous radii.
  *
  * Components never use raw palette utilities: they use the semantic tokens.

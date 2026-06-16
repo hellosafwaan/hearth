@@ -36,8 +36,8 @@ export interface CaptureStatus {
 
 // MAIN world ↔ isolated world bridge. CustomEvent detail is a JSON string —
 // structured detail objects hit Firefox X-ray cloning restrictions.
-export const DEVTOOLS_REQ_EVENT = '__sidekick_devtools_req__';
-export const DEVTOOLS_RES_EVENT = '__sidekick_devtools_res__';
+export const DEVTOOLS_REQ_EVENT = '__hearth_devtools_req__';
+export const DEVTOOLS_RES_EVENT = '__hearth_devtools_res__';
 
 export type DevtoolsQueryKind = 'console' | 'network' | 'status';
 

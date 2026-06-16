@@ -1,9 +1,9 @@
-# Sidekick — System Documentation
+# Hearth — System Documentation
 
 > Single source of truth for how this codebase works. Audience: developers and code agents
 > encountering the system for the first time. Last updated: 2026-06-11 (v21 era).
 
-**What it is:** Sidekick is a privacy-first, bring-your-own-key (BYOK) AI assistant that runs in
+**What it is:** Hearth is a privacy-first, bring-your-own-key (BYOK) AI assistant that runs in
 the browser's side panel (Chrome side panel / Firefox sidebar). An agent loop drives LLM tool
 calls against the user's current tab: reading pages, taking screenshots, clicking elements,
 filling forms, inspecting console/network activity, and searching browser history. State-changing
@@ -109,7 +109,7 @@ important orientation fact in this codebase.
 | **Side panel** (extension page) | `entrypoints/sidepanel/` | React UI, `useAgent`, the agent loop, **all tool executors**, provider HTTP calls, Dexie | While the panel is open |
 | **Content script** (isolated world) | `entrypoints/content.ts` | DOM reads/actions (`dom-actions.ts`, `page-intel.ts`), Readability extraction, devtools bridge | Per page load; injected statically or on demand |
 | **MAIN world** (page's own JS realm) | `entrypoints/devtools-capture.ts` | Console/fetch/XHR wrappers + ring buffers for `read_console` / `read_network` | Per page load, only after armed |
-| **Background** (MV3 service worker / MV2 script) | `entrypoints/background.ts` | Side-panel behavior, context menu ("Ask Sidekick about selection"), `chrome.debugger` sessions | Event-driven; MV3 worker can be killed anytime |
+| **Background** (MV3 service worker / MV2 script) | `entrypoints/background.ts` | Side-panel behavior, context menu ("Ask Hearth about selection"), `chrome.debugger` sessions | Event-driven; MV3 worker can be killed anytime |
 
 Key consequences:
 
@@ -346,7 +346,7 @@ a message type means extending the union and every switch lights up.
 
 ### 7.2 Content script ↔ MAIN world (`lib/devtools/protocol.ts`)
 
-`document` CustomEvents `__sidekick_devtools_req__` / `__sidekick_devtools_res__` with
+`document` CustomEvents `__hearth_devtools_req__` / `__hearth_devtools_res__` with
 **JSON-string `detail`** (structured clone of objects across worlds trips Firefox X-ray
 wrappers). Correlation ids; 1s timeout resolves to a `capture-not-armed` sentinel, which tells
 the executor to inject the capture script and retry.
@@ -367,7 +367,7 @@ response bodies.
 
 ### Tier 1 — lightweight capture (`entrypoints/devtools-capture.ts`)
 
-- Idempotent: guards on `window.__sidekick_capture__`, which owns the ring buffers
+- Idempotent: guards on `window.__hearth_capture__`, which owns the ring buffers
   (console 500 entries, network 300) so they survive isolated-world reinjection.
 - Wraps `console.log/info/warn/error/debug` (call-through), `window` `error` and
   `unhandledrejection`; wraps `fetch` and `XMLHttpRequest` (method/URL/status/duration/size).

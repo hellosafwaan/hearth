@@ -27,7 +27,7 @@ interface CaptureState {
 }
 
 export default defineUnlistedScript(() => {
-  const FLAG = '__sidekick_capture__';
+  const FLAG = '__hearth_capture__';
   const w = window as unknown as Record<string, unknown>;
   if (w[FLAG]) return; // already armed
   const state: CaptureState = { startedAt: Date.now(), console: [], network: [] };

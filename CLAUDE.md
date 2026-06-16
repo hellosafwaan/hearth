@@ -1,8 +1,8 @@
-# Sidekick — Claude Code instructions
+# Hearth — Claude Code instructions
 
 Privacy-first BYOK AI browser sidebar (Chrome MV3 + Firefox MV2, WXT + React 19 + Tailwind v4).
 Full architecture, protocols, and how-to recipes: **docs/SYSTEM.md**. Current plan and version
-log: **ROADMAP.md**. The product name is Sidekick; the repo folder name ("aria") appears nowhere
+log: **ROADMAP.md**. The product name is Hearth; the repo folder name ("aria") appears nowhere
 in code.
 
 ## Working agreements

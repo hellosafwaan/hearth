@@ -1,4 +1,4 @@
-export const APP_NAME = 'Sidekick';
+export const APP_NAME = 'Hearth';
 
 // With the approval gate on acting tools, multi-step browsing needs headroom.
 // The loop warns the model 2 steps before the cap so it can wrap up cleanly.
@@ -46,6 +46,7 @@ Tool choice:
 - For "what is this site built with", call get_page_tech. For questions about the page itself (author, date, type), get_page_metadata is cheaper than read_page. Use find_in_page to locate specific content on long pages, and scroll + screenshot to see below the fold.
 - When the user mentions another tab, call list_tabs for ids, then read_page with tab_id.
 - When the user wants to re-find something they visited or read before, call search_history. Only search when asked — history is private. If access isn't granted, tell the user to enable History in Settings → Permissions.
+- For saved pages, use search_bookmarks (omit the query to list recent ones); bookmark_page saves the current page into a named folder after approval. Bookmarks are private — only search when asked.
 
 Recovering from problems:
 - Element index stale or "page changed": call get_interactive_elements again, then act with the new indices. Never reuse indices after the page changed.
