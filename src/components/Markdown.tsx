@@ -1,7 +1,33 @@
+import bash from 'highlight.js/lib/languages/bash';
+import css from 'highlight.js/lib/languages/css';
+import javascript from 'highlight.js/lib/languages/javascript';
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import python from 'highlight.js/lib/languages/python';
+import sql from 'highlight.js/lib/languages/sql';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
 import { useState, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
+
+// Explicit grammar subset instead of lowlight's ~35-language "common" set —
+// saves ~200kB of bundle. Unlisted languages render unhighlighted but still
+// get the language tag and copy button.
+const HIGHLIGHT_LANGUAGES = {
+  bash,
+  css,
+  javascript,
+  json,
+  markdown,
+  python,
+  sql,
+  typescript,
+  xml, // also covers html
+  yaml,
+};
 
 // The one markdown renderer for chat: GFM (tables, strikethrough, task
 // lists), syntax highlighting, and code blocks with a language tag + copy
@@ -12,7 +38,7 @@ export function Markdown(props: { children: string }) {
     <div className="markdown max-w-full">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[[rehypeHighlight, { languages: HIGHLIGHT_LANGUAGES }]]}
         components={{ pre: CodeBlock }}
       >
         {props.children}
