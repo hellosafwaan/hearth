@@ -12,6 +12,7 @@ export const ACTING_TOOLS: ReadonlySet<string> = new Set([
   'open_tab',
   'reload_and_capture',
   'enable_deep_inspection',
+  'bookmark_page',
   // The plan itself goes through the approval gate — approving it is what
   // grants the site scope.
   'propose_plan',
@@ -308,6 +309,40 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         days: { type: 'integer', description: 'How far back to search (default 30, max 365).' },
         limit: { type: 'integer', description: 'Max results (default 20, max 50).' },
+      },
+    },
+  },
+  {
+    name: 'search_bookmarks',
+    description:
+      "Search the user's bookmarks by keywords, or list the most recently added ones when the " +
+      'query is omitted. The search runs on their device; only matching titles and URLs enter ' +
+      'the conversation. Requires the Bookmarks permission (Settings → Permissions). Results ' +
+      "are the user's private data — only search when asked.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Keywords to match against titles and URLs. Omit to list recent bookmarks.',
+        },
+        limit: { type: 'integer', description: 'Max results (default 20, max 50).' },
+      },
+    },
+  },
+  {
+    name: 'bookmark_page',
+    description:
+      'Save the current page as a bookmark, optionally into a named folder ("Reading", ' +
+      '"Work"…). If the folder does not exist, the bookmark goes to the default location and ' +
+      'the result says so. Requires user approval and the Bookmarks permission.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        folder: {
+          type: 'string',
+          description: 'Title of an existing bookmarks folder to save into (optional).',
+        },
       },
     },
   },

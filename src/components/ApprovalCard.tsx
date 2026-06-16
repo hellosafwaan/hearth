@@ -18,30 +18,34 @@ export interface PendingApproval {
 const ACTIONS: Record<string, { label: string; description: string }> = {
   click_element: {
     label: 'Click element',
-    description: 'Sidekick wants to click an element on the current page.',
+    description: 'Hearth wants to click an element on the current page.',
   },
   fill_form: {
     label: 'Fill out a field',
     description:
-      'Sidekick wants to type into a field on the current page. This may submit data from your session.',
+      'Hearth wants to type into a field on the current page. This may submit data from your session.',
   },
   navigate_to: {
     label: 'Navigate',
-    description: 'Sidekick wants to navigate this tab to a different URL.',
+    description: 'Hearth wants to navigate this tab to a different URL.',
   },
   open_tab: {
     label: 'Open new tab',
-    description: 'Sidekick wants to open a URL in a new tab.',
+    description: 'Hearth wants to open a URL in a new tab.',
+  },
+  bookmark_page: {
+    label: 'Save bookmark',
+    description: 'Hearth wants to bookmark the current page in your browser.',
   },
   reload_and_capture: {
     label: 'Reload with capture',
     description:
-      'Sidekick wants to reload this page with console/network capture armed. Unsaved page state may be lost.',
+      'Hearth wants to reload this page with console/network capture armed. Unsaved page state may be lost.',
   },
   enable_deep_inspection: {
     label: 'Attach debugger',
     description:
-      'Sidekick wants to attach a debugger to this tab for full network and console visibility. Chrome will show a debugging banner while it is active.',
+      'Hearth wants to attach a debugger to this tab for full network and console visibility. Chrome will show a debugging banner while it is active.',
   },
 };
 
@@ -53,7 +57,7 @@ export function ApprovalCard(props: { approval: PendingApproval }) {
 
   const action = ACTIONS[approval.name] ?? {
     label: approval.name,
-    description: 'Sidekick wants to perform this action.',
+    description: 'Hearth wants to perform this action.',
   };
   const details = Object.entries(approval.input);
 

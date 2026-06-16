@@ -79,6 +79,20 @@ export function revokeHistoryPermission(): Promise<boolean> {
   return browser.permissions.remove({ permissions: ['history'] }).catch(() => false);
 }
 
+/** Bookmarks — explicit opt-in; searches run locally, saving is approval-gated. */
+export function hasBookmarksPermission(): Promise<boolean> {
+  return browser.permissions.contains({ permissions: ['bookmarks'] }).catch(() => false);
+}
+
+/** Must be called from a user gesture (button click). */
+export function requestBookmarksPermission(): Promise<boolean> {
+  return browser.permissions.request({ permissions: ['bookmarks'] }).catch(() => false);
+}
+
+export function revokeBookmarksPermission(): Promise<boolean> {
+  return browser.permissions.remove({ permissions: ['bookmarks'] }).catch(() => false);
+}
+
 export function watchPermissions(callback: () => void): () => void {
   const api = browser.permissions as any;
   api.onAdded?.addListener(callback);

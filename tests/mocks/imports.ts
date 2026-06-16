@@ -23,6 +23,11 @@ export const browser = {
   history: {
     search: vi.fn(),
   },
+  bookmarks: {
+    search: vi.fn(),
+    getRecent: vi.fn(),
+    create: vi.fn(),
+  },
   runtime: {
     sendMessage: vi.fn(),
     onMessage: { addListener: vi.fn() },

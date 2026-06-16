@@ -23,6 +23,8 @@ export const TOOL_LABELS: Record<string, string> = {
   get_response_body: 'Response body',
   propose_plan: 'Plan',
   search_history: 'History',
+  search_bookmarks: 'Bookmarks',
+  bookmark_page: 'Save bookmark',
 };
 
 export function ToolChip(props: { name: string; pending?: boolean }) {

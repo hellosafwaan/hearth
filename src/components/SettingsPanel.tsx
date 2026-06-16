@@ -4,13 +4,16 @@ import { modelForProvider } from '../lib/providers/models';
 import { formatDebugLog } from '../lib/debug-log';
 import { exportAllData, importData } from '../lib/db/export';
 import {
+  hasBookmarksPermission,
   hasDebuggerPermission,
   hasHistoryPermission,
   hasPageAccess,
+  requestBookmarksPermission,
   requestDebuggerPermission,
   requestHistoryPermission,
   requestPageAccess,
   requestServerAccess,
+  revokeBookmarksPermission,
   revokeDebuggerPermission,
   revokeHistoryPermission,
   revokePageAccess,
@@ -47,6 +50,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
   const [pageAccess, setPageAccess] = useState<boolean | null>(null);
   const [debuggerAccess, setDebuggerAccess] = useState<boolean | null>(null);
   const [historyAccess, setHistoryAccess] = useState<boolean | null>(null);
+  const [bookmarksAccess, setBookmarksAccess] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLocal = draft.provider === 'openai-compatible';
@@ -56,6 +60,7 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
     const refresh = () => {
       hasPageAccess().then(setPageAccess);
       hasHistoryPermission().then(setHistoryAccess);
+      hasBookmarksPermission().then(setBookmarksAccess);
       if (!import.meta.env.FIREFOX) hasDebuggerPermission().then(setDebuggerAccess);
     };
     refresh();
@@ -360,6 +365,20 @@ export function SettingsPanel(props: { settings: Settings; onDone?: () => void }
         <p className="text-label-sm text-faint">
           Searches run on this device. Only matching titles and URLs are shared with the model,
           and only when you ask.
+        </p>
+        <PermissionRow
+          label="Bookmarks"
+          status={
+            bookmarksAccess
+              ? 'Granted — can search and save bookmarks'
+              : 'Not granted — bookmark tools disabled'
+          }
+          granted={!!bookmarksAccess}
+          onGrant={() => requestBookmarksPermission()}
+          onRevoke={() => revokeBookmarksPermission()}
+        />
+        <p className="text-label-sm text-faint">
+          Searches run on this device. Saving a bookmark always asks for your approval first.
         </p>
         {!import.meta.env.FIREFOX && (
           <>
