@@ -8,7 +8,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   }),
   manifest: ({ browser }) => ({
-    name: 'Sidekick',
+    name: 'Hearth',
     description:
       'Privacy-first AI sidebar. Bring your own key — nothing leaves your device except your own API calls.',
     permissions: ['tabs', 'storage', 'scripting', 'contextMenus'],
@@ -16,15 +16,15 @@ export default defineConfig({
     // install prompt stays clean. Chrome MV3 and Firefox MV2 use different
     // manifest keys for optional origins.
     ...(browser === 'firefox'
-      ? { optional_permissions: ['<all_urls>', 'history'] }
+      ? { optional_permissions: ['<all_urls>', 'history', 'bookmarks'] }
       : {
           optional_host_permissions: ['<all_urls>'],
-          // Deep inspection (debugger) and history search are explicit
-          // opt-ins; Firefox has no debugger API for extensions.
-          optional_permissions: ['debugger', 'history'],
+          // Deep inspection (debugger), history search, and bookmarks are
+          // explicit opt-ins; Firefox has no debugger API for extensions.
+          optional_permissions: ['debugger', 'history', 'bookmarks'],
         }),
     action: {
-      default_title: 'Sidekick',
+      default_title: 'Hearth',
     },
     commands:
       browser === 'firefox'
@@ -44,7 +44,7 @@ export default defineConfig({
     ...(browser === 'firefox'
       ? {
           browser_specific_settings: {
-            gecko: { id: 'sidekick@placeholder.dev' },
+            gecko: { id: 'hearth@placeholder.dev' },
           },
         }
       : {}),
